@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS link_category_map;
+DROP TABLE IF EXISTS links;
+DROP TABLE IF EXISTS category;
+DROP EXTENSION IF EXISTS "uuid-ossp";
