@@ -24,7 +24,6 @@ func (s *APIServer) Run() error {
 
 	app := gin.New()
 
-	// TODO: Implement Custom Logger
 	app.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		return fmt.Sprintf("[GIN] [%s] | [%s] %d | %s | %s\n",
 			param.TimeStamp.Format("2006-01-02 15:04:05"),
