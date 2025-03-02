@@ -49,6 +49,11 @@ type Querier interface {
 	//  SELECT id, name, parent_id, description FROM category
 	//  WHERE id = $1
 	GetCategoryByID(ctx context.Context, id pgtype.UUID) (GetCategoryByIDRow, error)
+	// Get category by name
+	//
+	//  SELECT id, name, parent_id, description FROM category
+	//  WHERE name = $1
+	GetCategoryByName(ctx context.Context, name string) (GetCategoryByNameRow, error)
 	// Get link by ID
 	//
 	//  SELECT id, url, title, description, short_url, created_at, updated_at

@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/OmprakashD20/refero-api/repository"
+	"github.com/OmprakashD20/refero-api/services/category"
 )
 
 type APIServer struct {
@@ -49,6 +50,11 @@ func (s *APIServer) Run() error {
 				"message": "You hit the API v1 route of Refero",
 			})
 		})
+
+		// Category Routes
+		categoryStore := category.NewStore(s.db)
+		categoryService := category.NewService(categoryStore)
+		categoryService.SetupCategoryRoutes(api.Group("/category"))
 	}
 
 	log.Printf("Server is running on PORT %s", s.port)

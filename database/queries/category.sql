@@ -7,6 +7,11 @@ SELECT id, name, parent_id, description, created_at, updated_at FROM category;
 SELECT id, name, parent_id, description FROM category 
 WHERE id = $1;
 
+-- Get category by name
+-- name: GetCategoryByName :one
+SELECT id, name, parent_id, description FROM category 
+WHERE name = $1;
+
 -- Get subcategories of a category
 -- name: GetSubcategories :many
 SELECT id, name, description, created_at, updated_at 

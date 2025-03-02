@@ -107,6 +107,34 @@ func (q *Queries) GetCategoryByID(ctx context.Context, id pgtype.UUID) (GetCateg
 	return i, err
 }
 
+const getCategoryByName = `-- name: GetCategoryByName :one
+SELECT id, name, parent_id, description FROM category 
+WHERE name = $1
+`
+
+type GetCategoryByNameRow struct {
+	ID          pgtype.UUID `db:"id" json:"id"`
+	Name        string      `db:"name" json:"name"`
+	ParentID    pgtype.UUID `db:"parent_id" json:"parentId"`
+	Description *string     `db:"description" json:"description"`
+}
+
+// Get category by name
+//
+//  SELECT id, name, parent_id, description FROM category
+//  WHERE name = $1
+func (q *Queries) GetCategoryByName(ctx context.Context, name string) (GetCategoryByNameRow, error) {
+	row := q.db.QueryRow(ctx, getCategoryByName, name)
+	var i GetCategoryByNameRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.ParentID,
+		&i.Description,
+	)
+	return i, err
+}
+
 const getSubcategories = `-- name: GetSubcategories :many
 SELECT id, name, description, created_at, updated_at 
 FROM category 
