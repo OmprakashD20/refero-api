@@ -44,7 +44,7 @@ func (s *Store) CreateCategory(ctx context.Context, category validator.CreateCat
 		}(),
 	}
 
-	if categoryId, err := s.db.CreateCategory(ctx, args);!categoryId.Valid {
+	if categoryId, err := s.db.CreateCategory(ctx, args); !categoryId.Valid {
 		return err
 	}
 
