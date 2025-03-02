@@ -180,7 +180,7 @@ func (q *Queries) GetSubcategories(ctx context.Context, parentID pgtype.UUID) ([
 	return items, nil
 }
 
-const updateCategory = `-- name: UpdateCategory :exec
+const updateCategory = `-- name: UpdateCategory :execrows
 UPDATE category 
 SET name = $1, parent_id = $2, description = $3, updated_at = now() 
 WHERE id = $4
@@ -198,12 +198,15 @@ type UpdateCategoryParams struct {
 //  UPDATE category
 //  SET name = $1, parent_id = $2, description = $3, updated_at = now()
 //  WHERE id = $4
-func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error {
-	_, err := q.db.Exec(ctx, updateCategory,
+func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateCategory,
 		arg.Name,
 		arg.ParentID,
 		arg.Description,
 		arg.ID,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

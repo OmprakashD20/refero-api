@@ -104,7 +104,7 @@ type Querier interface {
 	//  UPDATE category
 	//  SET name = $1, parent_id = $2, description = $3, updated_at = now()
 	//  WHERE id = $4
-	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error
+	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (int64, error)
 	// Update link details
 	//
 	//  UPDATE links

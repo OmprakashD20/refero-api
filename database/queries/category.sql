@@ -24,7 +24,7 @@ INSERT INTO category (name, parent_id, description)
 VALUES ($1, $2, $3) RETURNING id;
 
 -- Update category details
--- name: UpdateCategory :exec
+-- name: UpdateCategory :execrows
 UPDATE category 
 SET name = $1, parent_id = $2, description = $3, updated_at = now() 
 WHERE id = $4;
