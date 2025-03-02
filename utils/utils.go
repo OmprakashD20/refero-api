@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )

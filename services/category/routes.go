@@ -19,12 +19,15 @@ func NewService(store types.CategoryStore) *CategoryService {
 
 func (s *CategoryService) SetupCategoryRoutes(api *gin.RouterGroup) {
 	api.POST("/", validator.ValidateBody[validator.CreateCategoryPayload](), s.CreateCategoryHandler)
+	api.GET("/", s.GetCategoriesHandler)
+	api.GET("/:id", validator.ValidateParams[validator.GetCategoryByIDParam](), s.GetCategoryByIDHandler)
+	api.PATCH("/:id", validator.ValidateParams[validator.UpdateCategoryByIDParam](), validator.ValidateBody[validator.UpdateCategoryPayload](), s.UpdateCategoryByIDHandler)
 }
 
 func (s *CategoryService) CreateCategoryHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	category, ok := validator.GetValidatedData[validator.CreateCategoryPayload](c)
+	category, ok := validator.GetValidatedData[validator.CreateCategoryPayload](c, validator.ValidatedBodyKey)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid Data",
@@ -33,7 +36,7 @@ func (s *CategoryService) CreateCategoryHandler(c *gin.Context) {
 	}
 
 	// Check if the category exists
-	exists, err := s.store.CheckIfCategoryExists(ctx, category.Name)
+	exists, err := s.store.CheckIfCategoryExistsByName(ctx, category.Name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Internal Server Error",
@@ -51,12 +54,119 @@ func (s *CategoryService) CreateCategoryHandler(c *gin.Context) {
 	// Create the category
 	if err := s.store.CreateCategory(ctx, category); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal Server Error",
+			"error": "Failed to create category",
 		})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Category created successfully",
+	})
+}
+
+func (s *CategoryService) GetCategoriesHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Get all categories from the database
+	categories, err := s.store.GetAllCategories(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal Server Error",
+		})
+		return
+	}
+
+	// No categories found in the database
+	if categories == nil {
+		c.JSON(http.StatusOK, gin.H{
+			"categories": []types.CategoryDTO{},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"categories": categories,
+	})
+}
+
+func (s *CategoryService) GetCategoryByIDHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	params, ok := validator.GetValidatedData[validator.GetCategoryByIDParam](c, validator.ValidatedParamKey)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid Category",
+		})
+		return
+	}
+
+	// Get category by the Params ID from database
+	category, err := s.store.GetCategoryByID(ctx, params.Id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal Server Error",
+		})
+		return
+	}
+
+	// No category found with the Params ID
+	if category == nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Category not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"category": category,
+	})
+}
+
+func (s *CategoryService) UpdateCategoryByIDHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	params, ok := validator.GetValidatedData[validator.UpdateCategoryByIDParam](c, validator.ValidatedParamKey)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid Category",
+		})
+		return
+	}
+
+	category, ok := validator.GetValidatedData[validator.UpdateCategoryPayload](c, validator.ValidatedBodyKey)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid Data",
+		})
+		return
+	}
+
+	// Check if the category exists
+	exists, err := s.store.CheckIfCategoryExistsByID(ctx, params.Id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal Server Error",
+		})
+		return
+	}
+	// If it does not exists, return error
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Category not found",
+		})
+		return
+	}
+
+	// Update the category
+	err = s.store.UpdateCategoryByID(ctx, params.Id, category)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Unable to update the category",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Category updated successfully",
 	})
 }

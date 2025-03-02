@@ -11,7 +11,8 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-const ValidatedDataKey = "validatedBody"
+const ValidatedBodyKey = "validatedBody"
+const ValidatedParamKey = "validatedParam"
 
 func GetErrorMsg(fe validator.FieldError) string {
 	field := utils.FormatFieldName(fe.Field())
@@ -49,20 +50,42 @@ func ValidateBody[T any]() gin.HandlerFunc {
 				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"error": GetErrorMsg(fe)})
 				return
 			}
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
 		}
 
-		c.Set(ValidatedDataKey, body)
+		c.Set(ValidatedBodyKey, body)
 		c.Next()
 	}
 }
 
-func GetValidatedData[T any](c *gin.Context) (T, bool) {
-	val, exists := c.Get(ValidatedDataKey)
+func ValidateParams[T any]() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var uriParams T
+		if err := c.ShouldBindUri(&uriParams); err != nil {
+			var ve validator.ValidationErrors
+			if errors.As(err, &ve) {
+				fe := ve[0]
+				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"error": GetErrorMsg(fe)})
+				return
+			}
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
+		}
+
+		c.Set(ValidatedParamKey, uriParams)
+		c.Next()
+	}
+}
+
+
+func GetValidatedData[T any](c *gin.Context, key string) (T, bool) {
+	val, exists := c.Get(key)
 	if !exists {
 		var empty T
 		return empty, false
 	}
 
-	body, ok := val.(T)
-	return body, ok
+	data, ok := val.(T)
+	return data, ok
 }
