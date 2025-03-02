@@ -18,3 +18,19 @@ func FormatFieldName(field string) string {
 		),
 	)
 }
+
+func ToPgUUID(uuidStr string) pgtype.UUID {
+	var uuid pgtype.UUID
+	if err := uuid.Scan(uuidStr); err != nil {
+		return pgtype.UUID{}
+	}
+	return uuid
+}
+
+func PgUUIDToStringPtr(uuid pgtype.UUID) *string {
+	if uuid.Valid {
+		str := uuid.String()
+		return &str
+	}
+	return nil
+}

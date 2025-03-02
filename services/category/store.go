@@ -7,7 +7,6 @@ import (
 	"github.com/OmprakashD20/refero-api/repository"
 	validator "github.com/OmprakashD20/refero-api/validations"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Store struct {
@@ -34,14 +33,7 @@ func (s *Store) CreateCategory(ctx context.Context, category validator.CreateCat
 	args := repository.CreateCategoryParams{
 		Name:        category.Name,
 		Description: category.Description,
-		ParentID: func() pgtype.UUID {
-			var uuid pgtype.UUID
-			uuidStr := category.ParentId
-			if err := uuid.Scan(uuidStr); err != nil {
-				return pgtype.UUID{}
-			}
-			return uuid
-		}(),
+		ParentID:    utils.ToPgUUID(category.ParentId),
 	}
 
 	if categoryId, err := s.db.CreateCategory(ctx, args); !categoryId.Valid {
