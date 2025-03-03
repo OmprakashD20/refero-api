@@ -3,7 +3,6 @@ package category
 import (
 	"context"
 	"errors"
-	"log"
 
 	"github.com/OmprakashD20/refero-api/repository"
 	"github.com/OmprakashD20/refero-api/types"
@@ -45,7 +44,6 @@ func (s *Store) CheckIfCategoryExistsByID(ctx context.Context, id string) (bool,
 }
 
 func (s *Store) CreateCategory(ctx context.Context, category validator.CreateCategoryPayload) error {
-	log.Print(category.ParentId)
 	args := repository.CreateCategoryParams{
 		Name:        category.Name,
 		Description: category.Description,
