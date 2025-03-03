@@ -11,12 +11,12 @@ type (
 	UpdateCategoryPayload = CategoryPayload
 )
 
-type CategoryParam struct {
+type CategoryParams struct {
 	Id string `uri:"id" binding:"required,uuid"`
 }
 
 type (
-	GetCategoryByIDParam    = CategoryParam
-	UpdateCategoryByIDParam = CategoryParam
-	DeleteCategoryByIDParam = CategoryParam
+	GetCategoryByIDParam    = CategoryParams
+	UpdateCategoryByIDParam = CategoryParams
+	DeleteCategoryByIDParam = CategoryParams
 )
