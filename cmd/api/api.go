@@ -9,6 +9,7 @@ import (
 
 	"github.com/OmprakashD20/refero-api/repository"
 	"github.com/OmprakashD20/refero-api/services/category"
+	"github.com/OmprakashD20/refero-api/services/links"
 )
 
 type APIServer struct {
@@ -55,6 +56,11 @@ func (s *APIServer) Run() error {
 		categoryStore := category.NewStore(s.db)
 		categoryService := category.NewService(categoryStore)
 		categoryService.SetupCategoryRoutes(api.Group("/category"))
+
+		// Link Routes
+		linkStore := links.NewStore(s.db)
+		LinkService := links.NewService(linkStore)
+		LinkService.SetupLinkRoutes(api.Group("/link"))
 	}
 
 	log.Printf("Server is running on PORT %s", s.port)
