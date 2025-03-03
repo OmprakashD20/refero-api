@@ -11,8 +11,10 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-const ValidatedBodyKey = "validatedBody"
-const ValidatedParamKey = "validatedParam"
+const (
+	ValidatedBodyKey  = "validatedBody"
+	ValidatedParamKey = "validatedParam"
+)
 
 func GetErrorMsg(fe validator.FieldError) string {
 	field := utils.FormatFieldName(fe.Field())
@@ -77,7 +79,6 @@ func ValidateParams[T any]() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
 
 func GetValidatedData[T any](c *gin.Context, key string) (T, bool) {
 	val, exists := c.Get(key)

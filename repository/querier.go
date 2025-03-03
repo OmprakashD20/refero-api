@@ -15,7 +15,7 @@ type Querier interface {
 	//
 	//  INSERT INTO link_category_map (link_id, category_id)
 	//  VALUES ($1, $2) ON CONFLICT DO NOTHING
-	AddLinkToCategory(ctx context.Context, arg AddLinkToCategoryParams) error
+	AddLinkToCategory(ctx context.Context, arg AddLinkToCategoryParams) (int64, error)
 	// Create a new category
 	//
 	//  INSERT INTO category (name, parent_id, description)
@@ -24,11 +24,11 @@ type Querier interface {
 	// Delete category
 	//
 	//  DELETE FROM category WHERE id = $1
-	DeleteCategory(ctx context.Context, id pgtype.UUID) error
+	DeleteCategory(ctx context.Context, id pgtype.UUID) (int64, error)
 	// Delete link
 	//
 	//  DELETE FROM links WHERE id = $1
-	DeleteLink(ctx context.Context, id pgtype.UUID) error
+	DeleteLink(ctx context.Context, id pgtype.UUID) (int64, error)
 	// Get all categories
 	//
 	//  SELECT id, name, parent_id, description, created_at, updated_at FROM category
@@ -98,7 +98,7 @@ type Querier interface {
 	//
 	//  DELETE FROM link_category_map
 	//  WHERE link_id = $1 AND category_id = $2
-	RemoveLinkFromCategory(ctx context.Context, arg RemoveLinkFromCategoryParams) error
+	RemoveLinkFromCategory(ctx context.Context, arg RemoveLinkFromCategoryParams) (int64, error)
 	// Update category details
 	//
 	//  UPDATE category
@@ -110,7 +110,7 @@ type Querier interface {
 	//  UPDATE links
 	//  SET title = $1, description = $2, updated_at = now()
 	//  WHERE id = $3
-	UpdateLink(ctx context.Context, arg UpdateLinkParams) error
+	UpdateLink(ctx context.Context, arg UpdateLinkParams) (int64, error)
 }
 
 var _ Querier = (*Queries)(nil)

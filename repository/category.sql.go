@@ -24,8 +24,8 @@ type CreateCategoryParams struct {
 
 // Create a new category
 //
-//  INSERT INTO category (name, parent_id, description)
-//  VALUES ($1, $2, $3) RETURNING id
+//	INSERT INTO category (name, parent_id, description)
+//	VALUES ($1, $2, $3) RETURNING id
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (pgtype.UUID, error) {
 	row := q.db.QueryRow(ctx, createCategory, arg.Name, arg.ParentID, arg.Description)
 	var id pgtype.UUID
@@ -33,16 +33,19 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 	return id, err
 }
 
-const deleteCategory = `-- name: DeleteCategory :exec
+const deleteCategory = `-- name: DeleteCategory :execrows
 DELETE FROM category WHERE id = $1
 `
 
 // Delete category
 //
-//  DELETE FROM category WHERE id = $1
-func (q *Queries) DeleteCategory(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteCategory, id)
-	return err
+//	DELETE FROM category WHERE id = $1
+func (q *Queries) DeleteCategory(ctx context.Context, id pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteCategory, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getAllCategories = `-- name: GetAllCategories :many
@@ -51,7 +54,7 @@ SELECT id, name, parent_id, description, created_at, updated_at FROM category
 
 // Get all categories
 //
-//  SELECT id, name, parent_id, description, created_at, updated_at FROM category
+//	SELECT id, name, parent_id, description, created_at, updated_at FROM category
 func (q *Queries) GetAllCategories(ctx context.Context) ([]Category, error) {
 	rows, err := q.db.Query(ctx, getAllCategories)
 	if err != nil {
@@ -93,8 +96,8 @@ type GetCategoryByIDRow struct {
 
 // Get category by ID
 //
-//  SELECT id, name, parent_id, description FROM category
-//  WHERE id = $1
+//	SELECT id, name, parent_id, description FROM category
+//	WHERE id = $1
 func (q *Queries) GetCategoryByID(ctx context.Context, id pgtype.UUID) (GetCategoryByIDRow, error) {
 	row := q.db.QueryRow(ctx, getCategoryByID, id)
 	var i GetCategoryByIDRow
@@ -121,8 +124,8 @@ type GetCategoryByNameRow struct {
 
 // Get category by name
 //
-//  SELECT id, name, parent_id, description FROM category
-//  WHERE name = $1
+//	SELECT id, name, parent_id, description FROM category
+//	WHERE name = $1
 func (q *Queries) GetCategoryByName(ctx context.Context, name string) (GetCategoryByNameRow, error) {
 	row := q.db.QueryRow(ctx, getCategoryByName, name)
 	var i GetCategoryByNameRow
@@ -151,9 +154,9 @@ type GetSubcategoriesRow struct {
 
 // Get subcategories of a category
 //
-//  SELECT id, name, description, created_at, updated_at
-//  FROM category
-//  WHERE parent_id = $1
+//	SELECT id, name, description, created_at, updated_at
+//	FROM category
+//	WHERE parent_id = $1
 func (q *Queries) GetSubcategories(ctx context.Context, parentID pgtype.UUID) ([]GetSubcategoriesRow, error) {
 	rows, err := q.db.Query(ctx, getSubcategories, parentID)
 	if err != nil {
@@ -195,9 +198,9 @@ type UpdateCategoryParams struct {
 
 // Update category details
 //
-//  UPDATE category
-//  SET name = $1, parent_id = $2, description = $3, updated_at = now()
-//  WHERE id = $4
+//	UPDATE category
+//	SET name = $1, parent_id = $2, description = $3, updated_at = now()
+//	WHERE id = $4
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (int64, error) {
 	result, err := q.db.Exec(ctx, updateCategory,
 		arg.Name,

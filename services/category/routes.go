@@ -22,6 +22,7 @@ func (s *CategoryService) SetupCategoryRoutes(api *gin.RouterGroup) {
 	api.GET("/", s.GetCategoriesHandler)
 	api.GET("/:id", validator.ValidateParams[validator.GetCategoryByIDParam](), s.GetCategoryByIDHandler)
 	api.PATCH("/:id", validator.ValidateParams[validator.UpdateCategoryByIDParam](), validator.ValidateBody[validator.UpdateCategoryPayload](), s.UpdateCategoryByIDHandler)
+	api.DELETE("/:id", validator.ValidateParams[validator.DeleteCategoryByIDParam](), s.DeleteCategoryByIDHandler)
 }
 
 func (s *CategoryService) CreateCategoryHandler(c *gin.Context) {
@@ -161,12 +162,53 @@ func (s *CategoryService) UpdateCategoryByIDHandler(c *gin.Context) {
 	err = s.store.UpdateCategoryByID(ctx, params.Id, category)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Unable to update the category",
+			"error": "Failed to update the category",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Category updated successfully",
+	})
+}
+
+func (s *CategoryService) DeleteCategoryByIDHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	params, ok := validator.GetValidatedData[validator.UpdateCategoryByIDParam](c, validator.ValidatedParamKey)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid Category",
+		})
+		return
+	}
+
+	// Check if the category exists
+	exists, err := s.store.CheckIfCategoryExistsByID(ctx, params.Id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal Server Error",
+		})
+		return
+	}
+	// If it does not exists, return error
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Category not found",
+		})
+		return
+	}
+
+	// Delete the category
+	err = s.store.DeleteCategoryByID(ctx, params.Id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to delete the category",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Category deleted successfully",
 	})
 }

@@ -127,8 +127,19 @@ func (s *Store) UpdateCategoryByID(ctx context.Context, id string, category vali
 		ParentID:    utils.ToPgUUID(*existingCategory.ParentID),
 	})
 	if rows == 0 {
+		// [Category or Parent Category] does not exists in the database
+		return errors.New("category does not exists or no changes applied")
+	}
+
+	return err
+}
+
+func (s *Store) DeleteCategoryByID(ctx context.Context, id string) error {
+	rows, err := s.db.DeleteCategory(ctx, utils.ToPgUUID(id))
+
+	if rows == 0 {
 		// Category does not exists in the database
-		return errors.New("category does not exists")
+		return errors.New("category does not exists or no changes applied")
 	}
 
 	return err

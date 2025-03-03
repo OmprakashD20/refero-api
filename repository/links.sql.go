@@ -11,16 +11,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const deleteLink = `-- name: DeleteLink :exec
+const deleteLink = `-- name: DeleteLink :execrows
 DELETE FROM links WHERE id = $1
 `
 
 // Delete link
 //
-//  DELETE FROM links WHERE id = $1
-func (q *Queries) DeleteLink(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteLink, id)
-	return err
+//	DELETE FROM links WHERE id = $1
+func (q *Queries) DeleteLink(ctx context.Context, id pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteLink, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getAllLinks = `-- name: GetAllLinks :many
@@ -29,7 +32,7 @@ SELECT id, url, title, description, short_url, created_at, updated_at FROM links
 
 // Get all public links
 //
-//  SELECT id, url, title, description, short_url, created_at, updated_at FROM links
+//	SELECT id, url, title, description, short_url, created_at, updated_at FROM links
 func (q *Queries) GetAllLinks(ctx context.Context) ([]Link, error) {
 	rows, err := q.db.Query(ctx, getAllLinks)
 	if err != nil {
@@ -66,9 +69,9 @@ WHERE id = $1
 
 // Get link by ID
 //
-//  SELECT id, url, title, description, short_url, created_at, updated_at
-//  FROM links
-//  WHERE id = $1
+//	SELECT id, url, title, description, short_url, created_at, updated_at
+//	FROM links
+//	WHERE id = $1
 func (q *Queries) GetLinkByID(ctx context.Context, id pgtype.UUID) (Link, error) {
 	row := q.db.QueryRow(ctx, getLinkByID, id)
 	var i Link
@@ -99,8 +102,8 @@ type GetLinkByShortURLRow struct {
 
 // Get link by short URL
 //
-//  SELECT id, url, title, description, short_url FROM links
-//  WHERE short_url = $1
+//	SELECT id, url, title, description, short_url FROM links
+//	WHERE short_url = $1
 func (q *Queries) GetLinkByShortURL(ctx context.Context, shortUrl string) (GetLinkByShortURLRow, error) {
 	row := q.db.QueryRow(ctx, getLinkByShortURL, shortUrl)
 	var i GetLinkByShortURLRow
@@ -128,7 +131,7 @@ type GetLinkByURLRow struct {
 
 // Get link by URL
 //
-//  SELECT id, url, title, description, short_url FROM links WHERE url = $1
+//	SELECT id, url, title, description, short_url FROM links WHERE url = $1
 func (q *Queries) GetLinkByURL(ctx context.Context, url string) (GetLinkByURLRow, error) {
 	row := q.db.QueryRow(ctx, getLinkByURL, url)
 	var i GetLinkByURLRow
@@ -156,10 +159,10 @@ type GetLinksPaginatedParams struct {
 
 // Get paginated links
 //
-//  SELECT id, url, title, description, short_url, created_at, updated_at
-//  FROM links
-//  ORDER BY created_at DESC
-//  LIMIT $1 OFFSET $2
+//	SELECT id, url, title, description, short_url, created_at, updated_at
+//	FROM links
+//	ORDER BY created_at DESC
+//	LIMIT $1 OFFSET $2
 func (q *Queries) GetLinksPaginated(ctx context.Context, arg GetLinksPaginatedParams) ([]Link, error) {
 	rows, err := q.db.Query(ctx, getLinksPaginated, arg.Limit, arg.Offset)
 	if err != nil {
@@ -202,8 +205,8 @@ type InsertLinkParams struct {
 
 // Insert a new link
 //
-//  INSERT INTO links (url, title, description, short_url)
-//  VALUES ($1, $2, $3, $4) RETURNING id
+//	INSERT INTO links (url, title, description, short_url)
+//	VALUES ($1, $2, $3, $4) RETURNING id
 func (q *Queries) InsertLink(ctx context.Context, arg InsertLinkParams) (pgtype.UUID, error) {
 	row := q.db.QueryRow(ctx, insertLink,
 		arg.Url,
@@ -216,7 +219,7 @@ func (q *Queries) InsertLink(ctx context.Context, arg InsertLinkParams) (pgtype.
 	return id, err
 }
 
-const updateLink = `-- name: UpdateLink :exec
+const updateLink = `-- name: UpdateLink :execrows
 UPDATE links 
 SET title = $1, description = $2, updated_at = now() 
 WHERE id = $3
@@ -230,10 +233,13 @@ type UpdateLinkParams struct {
 
 // Update link details
 //
-//  UPDATE links
-//  SET title = $1, description = $2, updated_at = now()
-//  WHERE id = $3
-func (q *Queries) UpdateLink(ctx context.Context, arg UpdateLinkParams) error {
-	_, err := q.db.Exec(ctx, updateLink, arg.Title, arg.Description, arg.ID)
-	return err
+//	UPDATE links
+//	SET title = $1, description = $2, updated_at = now()
+//	WHERE id = $3
+func (q *Queries) UpdateLink(ctx context.Context, arg UpdateLinkParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateLink, arg.Title, arg.Description, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

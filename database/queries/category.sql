@@ -30,5 +30,5 @@ SET name = $1, parent_id = $2, description = $3, updated_at = now()
 WHERE id = $4;
 
 -- Delete category
--- name: DeleteCategory :exec
+-- name: DeleteCategory :execrows
 DELETE FROM category WHERE id = $1;

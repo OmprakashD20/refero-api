@@ -8,9 +8,9 @@ import (
 )
 
 type EnvConfig struct {
-	AppEnv        string
-	Port           string
-	DB             DBConfig
+	AppEnv string
+	Port   string
+	DB     DBConfig
 }
 
 type DBConfig struct {
@@ -39,7 +39,7 @@ func initConfig() EnvConfig {
 			DBPassword: *getEnv("DB_PASS"),
 			DBName:     *getEnv("DB_NAME"),
 			SSLMode:    *getEnv("DB_SSLMODE"),
-		}, 
+		},
 	}
 }
 

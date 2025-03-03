@@ -14,6 +14,7 @@ type CategoryStore interface {
 	GetAllCategories(ctx context.Context) ([]CategoryDTO, error)
 	GetCategoryByID(ctx context.Context, id string) (*CategoryDTO, error)
 	UpdateCategoryByID(ctx context.Context, id string, category validator.UpdateCategoryPayload) error
+	DeleteCategoryByID(ctx context.Context, id string) error
 }
 
 type CategoryDTO struct {

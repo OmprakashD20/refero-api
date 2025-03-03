@@ -23,13 +23,13 @@ INSERT INTO links (url, title, description, short_url)
 VALUES ($1, $2, $3, $4) RETURNING id;
 
 -- Update link details
--- name: UpdateLink :exec
+-- name: UpdateLink :execrows
 UPDATE links 
 SET title = $1, description = $2, updated_at = now() 
 WHERE id = $3;
 
 -- Delete link
--- name: DeleteLink :exec
+-- name: DeleteLink :execrows
 DELETE FROM links WHERE id = $1;
 
 -- Get paginated links
