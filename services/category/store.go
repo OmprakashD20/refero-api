@@ -3,6 +3,7 @@ package category
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/OmprakashD20/refero-api/repository"
 	"github.com/OmprakashD20/refero-api/types"
@@ -44,6 +45,7 @@ func (s *Store) CheckIfCategoryExistsByID(ctx context.Context, id string) (bool,
 }
 
 func (s *Store) CreateCategory(ctx context.Context, category validator.CreateCategoryPayload) error {
+	log.Print(category.ParentId)
 	args := repository.CreateCategoryParams{
 		Name:        category.Name,
 		Description: category.Description,
@@ -103,29 +105,14 @@ func (s *Store) GetCategoryByID(ctx context.Context, id string) (*types.Category
 }
 
 func (s *Store) UpdateCategoryByID(ctx context.Context, id string, category validator.UpdateCategoryPayload) error {
-	existingCategory, err := s.GetCategoryByID(ctx, id)
-	if err != nil {
-		return err
+	args := repository.UpdateCategoryParams{
+		ID:          utils.ToPgUUID(id),
+		Name:        category.Name,
+		Description: category.Description,
+		ParentID:    utils.ToPgUUID(category.ParentId),
 	}
 
-	if category.Name != nil {
-		existingCategory.Name = *category.Name
-	}
-
-	if category.Description != nil {
-		existingCategory.Description = category.Description
-	}
-
-	if category.ParentId != nil {
-		existingCategory.ParentID = category.ParentId
-	}
-
-	rows, err := s.db.UpdateCategory(ctx, repository.UpdateCategoryParams{
-		ID:          utils.ToPgUUID(existingCategory.ID),
-		Name:        existingCategory.Name,
-		Description: existingCategory.Description,
-		ParentID:    utils.ToPgUUID(*existingCategory.ParentID),
-	})
+	rows, err := s.db.UpdateCategory(ctx, args)
 	if rows == 0 {
 		// [Category or Parent Category] does not exists in the database
 		return errors.New("category does not exists or no changes applied")
