@@ -21,7 +21,7 @@ func (s *CategoryService) SetupCategoryRoutes(api *gin.RouterGroup) {
 	api.POST("/", validator.ValidateBody[validator.CreateCategoryPayload](), s.CreateCategoryHandler)
 	api.GET("/", s.GetCategoriesHandler)
 	api.GET("/:id", validator.ValidateParams[validator.GetCategoryByIDParam](), s.GetCategoryByIDHandler)
-	api.PATCH("/:id", validator.ValidateParams[validator.UpdateCategoryByIDParam](), validator.ValidateBody[validator.UpdateCategoryPayload](), s.UpdateCategoryByIDHandler)
+	api.PUT("/:id", validator.ValidateParams[validator.UpdateCategoryByIDParam](), validator.ValidateBody[validator.UpdateCategoryPayload](), s.UpdateCategoryByIDHandler)
 	api.DELETE("/:id", validator.ValidateParams[validator.DeleteCategoryByIDParam](), s.DeleteCategoryByIDHandler)
 }
 
