@@ -11,26 +11,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addLinkToCategory = `-- name: AddLinkToCategory :execrows
-INSERT INTO link_category_map (link_id, category_id) 
-VALUES ($1, $2) ON CONFLICT DO NOTHING
-`
-
 type AddLinkToCategoryParams struct {
 	LinkID     pgtype.UUID `db:"link_id" json:"linkId"`
 	CategoryID pgtype.UUID `db:"category_id" json:"categoryId"`
-}
-
-// Associate a link with a category
-//
-//	INSERT INTO link_category_map (link_id, category_id)
-//	VALUES ($1, $2) ON CONFLICT DO NOTHING
-func (q *Queries) AddLinkToCategory(ctx context.Context, arg AddLinkToCategoryParams) (int64, error) {
-	result, err := q.db.Exec(ctx, addLinkToCategory, arg.LinkID, arg.CategoryID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
 }
 
 const getCategoriesForLink = `-- name: GetCategoriesForLink :many
@@ -48,10 +31,10 @@ type GetCategoriesForLinkRow struct {
 
 // Get all categories linked to a specific link
 //
-//	SELECT c.id, c.name, c.description
-//	FROM category c
-//	JOIN link_category_map lcm ON c.id = lcm.category_id
-//	WHERE lcm.link_id = $1
+//  SELECT c.id, c.name, c.description
+//  FROM category c
+//  JOIN link_category_map lcm ON c.id = lcm.category_id
+//  WHERE lcm.link_id = $1
 func (q *Queries) GetCategoriesForLink(ctx context.Context, linkID pgtype.UUID) ([]GetCategoriesForLinkRow, error) {
 	rows, err := q.db.Query(ctx, getCategoriesForLink, linkID)
 	if err != nil {
@@ -81,10 +64,10 @@ WHERE lcm.category_id = $1
 
 // Get all links in a category
 //
-//	SELECT l.id, l.url, l.title, l.description, l.short_url, l.created_at, l.updated_at
-//	FROM links l
-//	JOIN link_category_map lcm ON l.id = lcm.link_id
-//	WHERE lcm.category_id = $1
+//  SELECT l.id, l.url, l.title, l.description, l.short_url, l.created_at, l.updated_at
+//  FROM links l
+//  JOIN link_category_map lcm ON l.id = lcm.link_id
+//  WHERE lcm.category_id = $1
 func (q *Queries) GetLinksForCategory(ctx context.Context, categoryID pgtype.UUID) ([]Link, error) {
 	rows, err := q.db.Query(ctx, getLinksForCategory, categoryID)
 	if err != nil {
@@ -125,8 +108,8 @@ type RemoveLinkFromCategoryParams struct {
 
 // Remove a link from a category
 //
-//	DELETE FROM link_category_map
-//	WHERE link_id = $1 AND category_id = $2
+//  DELETE FROM link_category_map
+//  WHERE link_id = $1 AND category_id = $2
 func (q *Queries) RemoveLinkFromCategory(ctx context.Context, arg RemoveLinkFromCategoryParams) (int64, error) {
 	result, err := q.db.Exec(ctx, removeLinkFromCategory, arg.LinkID, arg.CategoryID)
 	if err != nil {

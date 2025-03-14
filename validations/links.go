@@ -1,10 +1,10 @@
 package validator
 
 type LinkPayload struct {
-	Title       string  `json:"title" binding:"required,min=4"`
-	URL         string  `json:"url" binding:"required,url"`
-	Description *string `json:"description" binding:"required,min=10"`
-	CategoryID  string  `json:"categoryId" binding:"required,uuid"`
+	Title       string   `json:"title" binding:"required,min=4"`
+	URL         string   `json:"url" binding:"required,url"`
+	Description *string  `json:"description" binding:"required,min=10"`
+	CategoryIDs []string `json:"categoryIds" binding:"omitempty,dive,uuid"`
 }
 
 type (
@@ -20,4 +20,7 @@ type (
 	GetLinkByIDParam    = LinkParams
 	UpdateLinkByIDParam = LinkParams
 	DeleteLinkByIDParam = LinkParams
+	RedirectLinkParams  struct {
+		ShortURL string `uri:"shortUrl" binding:"required"`
+	}
 )

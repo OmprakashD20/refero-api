@@ -13,9 +13,15 @@ import (
 type Querier interface {
 	// Associate a link with a category
 	//
-	//  INSERT INTO link_category_map (link_id, category_id)
-	//  VALUES ($1, $2) ON CONFLICT DO NOTHING
-	AddLinkToCategory(ctx context.Context, arg AddLinkToCategoryParams) (int64, error)
+	//  INSERT INTO link_category_map (link_id, category_id) VALUES ($1, $2)
+	AddLinkToCategory(ctx context.Context, arg []AddLinkToCategoryParams) (int64, error)
+	// Check if link exists by URL
+	//
+	//  SELECT id, true AS exists FROM links l WHERE l.url = $1
+	//  UNION ALL
+	//  SELECT NULL, false AS exists WHERE NOT EXISTS (SELECT 1 FROM links WHERE links.url = $1)
+	//  LIMIT 1
+	CheckIfLinkExistsByURL(ctx context.Context, url string) (CheckIfLinkExistsByURLRow, error)
 	// Create a new category
 	//
 	//  INSERT INTO category (name, parent_id, description)

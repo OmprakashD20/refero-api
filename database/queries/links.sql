@@ -12,6 +12,13 @@ WHERE id = $1;
 -- name: GetLinkByURL :one
 SELECT id, url, title, description, short_url FROM links WHERE url = $1;
 
+-- Check if link exists by URL
+-- name: CheckIfLinkExistsByURL :one
+SELECT id, true AS exists FROM links l WHERE l.url = $1
+UNION ALL
+SELECT NULL, false AS exists WHERE NOT EXISTS (SELECT 1 FROM links WHERE links.url = $1)
+LIMIT 1;
+
 -- Get link by short URL
 -- name: GetLinkByShortURL :one
 SELECT id, url, title, description, short_url FROM links 

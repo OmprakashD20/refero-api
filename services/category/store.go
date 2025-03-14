@@ -8,6 +8,7 @@ import (
 	"github.com/OmprakashD20/refero-api/types"
 	"github.com/OmprakashD20/refero-api/utils"
 	validator "github.com/OmprakashD20/refero-api/validations"
+
 	"github.com/jackc/pgx/v5"
 )
 
@@ -22,6 +23,7 @@ func NewStore(db *repository.Queries) *Store {
 func (s *Store) CheckIfCategoryExistsByName(ctx context.Context, name string) (bool, error) {
 	_, err := s.db.GetCategoryByName(ctx, name)
 	if err != nil {
+		// Category doesn't exists in the database
 		if errors.Is(err, pgx.ErrNoRows) {
 			return false, nil
 		}
@@ -34,6 +36,7 @@ func (s *Store) CheckIfCategoryExistsByName(ctx context.Context, name string) (b
 func (s *Store) CheckIfCategoryExistsByID(ctx context.Context, id string) (bool, error) {
 	_, err := s.db.GetCategoryByID(ctx, utils.ToPgUUID(id))
 	if err != nil {
+		// Category doesn't exists in the database
 		if errors.Is(err, pgx.ErrNoRows) {
 			return false, nil
 		}

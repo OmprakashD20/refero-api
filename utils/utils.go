@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/md5"
+	"encoding/base64"
 	"regexp"
 	"strings"
 
@@ -34,4 +36,10 @@ func PgUUIDToStringPtr(uuid pgtype.UUID) *string {
 		return &str
 	}
 	return nil
+}
+
+func GenerateShortURL(url string) string {
+	hash := md5.Sum([]byte(url))
+	encoded := base64.URLEncoding.EncodeToString(hash[:])
+	return strings.TrimRight(encoded[:8], "=")
 }

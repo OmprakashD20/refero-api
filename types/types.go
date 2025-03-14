@@ -17,7 +17,18 @@ type CategoryStore interface {
 	DeleteCategoryByID(ctx context.Context, id string) error
 }
 
-type LinkStore interface{}
+type LinkStore interface {
+	AddLinkToCategory(ctx context.Context, mappings []LinkCategoryDTO) error
+	// CheckIfLinkExistsByID(ctx context.Context, id string) (bool, error)
+	CheckIfLinkExistsByURL(ctx context.Context, url string) (*string, error)
+	InsertLink(ctx context.Context, link validator.CreateLinkPayload, shortUrl string) (*string, error)
+	// GetLinkByID(ctx context.Context, id string) (*LinkDTO, error)
+	// GetLinkByURL(ctx context.Context, url string) (*LinkDTO, error)
+	GetLinkByShortURL(ctx context.Context, shortUrl string) (*LinkDTO, error)
+	GetCategoriesForLink(ctx context.Context, id string) ([]string, error)
+	// UpdateLinkByID(ctx context.Context, id string, link validator.UpdateLinkPayload) error
+	// DeleteLinkByID(ctx context.Context, id string) error
+}
 
 type CategoryDTO struct {
 	ID          string     `json:"id"`
@@ -36,4 +47,9 @@ type LinkDTO struct {
 	ShortUrl    string     `json:"shortUrl"`
 	CreatedAt   *time.Time `json:"createdAt,omitempty"`
 	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
+}
+
+type LinkCategoryDTO struct {
+	LinkID     string `json:"linkId"`
+	CategoryID string `json:"categoryId"`
 }

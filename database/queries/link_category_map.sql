@@ -13,9 +13,8 @@ JOIN link_category_map lcm ON l.id = lcm.link_id
 WHERE lcm.category_id = $1;
 
 -- Associate a link with a category
--- name: AddLinkToCategory :execrows
-INSERT INTO link_category_map (link_id, category_id) 
-VALUES ($1, $2) ON CONFLICT DO NOTHING;
+-- name: AddLinkToCategory :copyfrom
+INSERT INTO link_category_map (link_id, category_id) VALUES ($1, $2);
 
 -- Remove a link from a category
 -- name: RemoveLinkFromCategory :execrows
