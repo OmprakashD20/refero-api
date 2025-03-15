@@ -9,22 +9,22 @@ import (
 	"github.com/OmprakashD20/refero-api/config"
 )
 
-func InitDB(config *config.DBConfig) (*pgxpool.Pool, error) {
+func InitDB(ctx context.Context, config *config.DBConfig) (*pgxpool.Pool, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		config.DBHost, config.DBPort, config.DBUser, config.DBPassword, config.DBName, config.SSLMode,
 	)
 
-	conn, err := pgxpool.New(context.Background(), dsn)
+	conn, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return nil, err
 	}
 
 	// Ping the database to verify the connection
-	err = conn.Ping(context.Background())
-	if err != nil {
+	if err = conn.Ping(ctx); err != nil {
+		conn.Close()
 		return nil, err
 	}
 
-	return conn, err
+	return conn, nil
 }

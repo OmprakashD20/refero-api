@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"log"
+	"time"
 
 	"github.com/OmprakashD20/refero-api/cmd/api"
 	"github.com/OmprakashD20/refero-api/config"
@@ -10,8 +12,11 @@ import (
 )
 
 func main() {
+	dbCtx, dbCancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer dbCancel()
+
 	// Init Database Connection
-	conn, err := database.InitDB(&config.Envs.DB)
+	conn, err := database.InitDB(dbCtx, &config.Envs.DB)
 	if err != nil {
 		log.Fatalf("Failed connecting the database: %v", err)
 	}
