@@ -1,10 +1,11 @@
 package utils
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/base64"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/text/cases"
@@ -39,7 +40,7 @@ func PgUUIDToStringPtr(uuid pgtype.UUID) *string {
 }
 
 func GenerateShortURL(url string) string {
-	hash := md5.Sum([]byte(url))
+	hash := sha256.Sum256([]byte(url + time.Now().String()))
 	encoded := base64.URLEncoding.EncodeToString(hash[:])
-	return strings.TrimRight(encoded[:8], "=")
+	return strings.TrimRight(encoded[:10], "=")
 }
