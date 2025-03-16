@@ -1,8 +1,10 @@
 package category
 
 import (
+	"errors"
 	"net/http"
 
+	db_errors "github.com/OmprakashD20/refero-api/errors"
 	"github.com/OmprakashD20/refero-api/types"
 	validator "github.com/OmprakashD20/refero-api/validations"
 
@@ -61,9 +63,7 @@ func (s *CategoryService) CreateCategoryHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Category created successfully",
-	})
+	c.JSON(http.StatusCreated, nil)
 }
 
 func (s *CategoryService) GetCategoriesHandler(c *gin.Context) {
@@ -80,15 +80,11 @@ func (s *CategoryService) GetCategoriesHandler(c *gin.Context) {
 
 	// No categories found in the database
 	if categories == nil {
-		c.JSON(http.StatusOK, gin.H{
-			"categories": []types.CategoryDTO{},
-		})
+		c.JSON(http.StatusOK, []types.CategoryDTO{})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"categories": categories,
-	})
+	c.JSON(http.StatusOK, categories)
 }
 
 func (s *CategoryService) GetCategoryByIDHandler(c *gin.Context) {
@@ -119,9 +115,7 @@ func (s *CategoryService) GetCategoryByIDHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"category": category,
-	})
+	c.JSON(http.StatusOK, category)
 }
 
 func (s *CategoryService) UpdateCategoryByIDHandler(c *gin.Context) {
@@ -143,34 +137,23 @@ func (s *CategoryService) UpdateCategoryByIDHandler(c *gin.Context) {
 		return
 	}
 
-	// Check if the category exists
-	exists, err := s.store.CheckIfCategoryExistsByID(ctx, params.Id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal Server Error",
-		})
-		return
-	}
-	// If it does not exists, return error
-	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Category not found",
-		})
-		return
-	}
-
 	// Update the category
-	err = s.store.UpdateCategoryByID(ctx, params.Id, category)
-	if err != nil {
+	if err := s.store.UpdateCategoryByID(ctx, params.Id, category); err != nil {
+		// If category doesn't exists
+		if errors.Is(err, db_errors.ErrCategoryNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Category not found",
+			})
+			return
+		}
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update the category",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Category updated successfully",
-	})
+	c.JSON(http.StatusOK, nil)
 }
 
 func (s *CategoryService) DeleteCategoryByIDHandler(c *gin.Context) {
@@ -184,34 +167,23 @@ func (s *CategoryService) DeleteCategoryByIDHandler(c *gin.Context) {
 		return
 	}
 
-	// Check if the category exists
-	exists, err := s.store.CheckIfCategoryExistsByID(ctx, params.Id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal Server Error",
-		})
-		return
-	}
-	// If it does not exists, return error
-	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Category not found",
-		})
-		return
-	}
-
 	// Delete the category
-	err = s.store.DeleteCategoryByID(ctx, params.Id)
-	if err != nil {
+	if err := s.store.DeleteCategoryByID(ctx, params.Id); err != nil {
+		// If category doesn't exists
+		if errors.Is(err, db_errors.ErrCategoryNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Category not found",
+			})
+			return
+		}
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to delete the category",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Category deleted successfully",
-	})
+	c.JSON(http.StatusOK, nil)
 }
 
 func (s *CategoryService) GetLinksForCategoryHandler(c *gin.Context) {
