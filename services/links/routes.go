@@ -22,8 +22,6 @@ func NewService(store types.LinkStore) *LinkService {
 func (s *LinkService) SetupLinkRoutes(api *gin.RouterGroup) {
 	api.POST("/", validator.ValidateBody[validator.CreateLinkPayload](), s.CreateLinkHandler)
 	api.GET("/r/:shortUrl", validator.ValidateParams[validator.RedirectLinkParams](), s.RedirectURLHandler)
-	api.GET("/")
-	api.GET("/:id", validator.ValidateParams[validator.GetLinkByIDParam]())
 	api.PUT("/:id", validator.ValidateParams[validator.UpdateLinkByIDParam](), validator.ValidateBody[validator.UpdateLinkPayload]())
 	api.DELETE("/:id", validator.ValidateParams[validator.DeleteLinkByIDParam]())
 }

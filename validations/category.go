@@ -16,7 +16,8 @@ type CategoryParams struct {
 }
 
 type (
-	GetCategoryByIDParam    = CategoryParams
-	UpdateCategoryByIDParam = CategoryParams
-	DeleteCategoryByIDParam = CategoryParams
+	GetCategoryByIDParam      = CategoryParams
+	UpdateCategoryByIDParam   = CategoryParams
+	DeleteCategoryByIDParam   = CategoryParams
+	GetLinksForCategoryParams = CategoryParams
 )

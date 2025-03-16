@@ -132,3 +132,29 @@ func (s *Store) DeleteCategoryByID(ctx context.Context, id string) error {
 
 	return err
 }
+
+func (s *Store) GetLinksForCategory(ctx context.Context, id string) ([]types.LinkDTO, error) {
+	data, err := s.db.GetLinksForCategory(ctx, utils.ToPgUUID(id))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []types.LinkDTO{}, nil
+		}
+
+		return nil, err
+	}
+
+	links := make([]types.LinkDTO, len(data))
+	for i, link := range data {
+		links[i] = types.LinkDTO{
+			ID:          link.ID.String(),
+			Url:         link.Url,
+			Title:       link.Title,
+			Description: link.Description,
+			ShortUrl:    link.ShortUrl,
+			CreatedAt:   &link.CreatedAt.Time,
+			UpdatedAt:   &link.UpdatedAt.Time,
+		}
+	}
+
+	return links, nil
+}

@@ -15,6 +15,7 @@ type CategoryStore interface {
 	GetCategoryByID(ctx context.Context, id string) (*CategoryDTO, error)
 	UpdateCategoryByID(ctx context.Context, id string, category validator.UpdateCategoryPayload) error
 	DeleteCategoryByID(ctx context.Context, id string) error
+	GetLinksForCategory(ctx context.Context, id string) ([]LinkDTO, error)
 }
 
 type LinkStore interface {
