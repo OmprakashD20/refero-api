@@ -12,6 +12,16 @@ FROM links l
 JOIN link_category_map lcm ON l.id = lcm.link_id 
 WHERE lcm.category_id = $1;
 
+-- Get all uncategorized links
+-- name: GetUncategorizedLinks :many
+SELECT * 
+FROM links l
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM link_category_map lcm 
+    WHERE l.id = lcm.link_id
+);
+
 -- Associate a link with a category
 -- name: AddLinkToCategory :copyfrom
 INSERT INTO link_category_map (link_id, category_id) VALUES ($1, $2);

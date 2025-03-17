@@ -96,6 +96,53 @@ func (q *Queries) GetLinksForCategory(ctx context.Context, categoryID pgtype.UUI
 	return items, nil
 }
 
+const getUncategorizedLinks = `-- name: GetUncategorizedLinks :many
+SELECT id, url, title, description, short_url, created_at, updated_at 
+FROM links l
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM link_category_map lcm 
+    WHERE l.id = lcm.link_id
+)
+`
+
+// Get all uncategorized links
+//
+//  SELECT id, url, title, description, short_url, created_at, updated_at
+//  FROM links l
+//  WHERE NOT EXISTS (
+//      SELECT 1
+//      FROM link_category_map lcm
+//      WHERE l.id = lcm.link_id
+//  )
+func (q *Queries) GetUncategorizedLinks(ctx context.Context) ([]Link, error) {
+	rows, err := q.db.Query(ctx, getUncategorizedLinks)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Link
+	for rows.Next() {
+		var i Link
+		if err := rows.Scan(
+			&i.ID,
+			&i.Url,
+			&i.Title,
+			&i.Description,
+			&i.ShortUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const removeLinkFromCategory = `-- name: RemoveLinkFromCategory :execrows
 DELETE FROM link_category_map 
 WHERE link_id = $1 AND category_id = $2

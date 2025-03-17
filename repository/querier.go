@@ -100,6 +100,16 @@ type Querier interface {
 	//  FROM category
 	//  WHERE parent_id = $1
 	GetSubcategories(ctx context.Context, parentID pgtype.UUID) ([]GetSubcategoriesRow, error)
+	// Get all uncategorized links
+	//
+	//  SELECT id, url, title, description, short_url, created_at, updated_at
+	//  FROM links l
+	//  WHERE NOT EXISTS (
+	//      SELECT 1
+	//      FROM link_category_map lcm
+	//      WHERE l.id = lcm.link_id
+	//  )
+	GetUncategorizedLinks(ctx context.Context) ([]Link, error)
 	// Remove a link from a category
 	//
 	//  DELETE FROM link_category_map
