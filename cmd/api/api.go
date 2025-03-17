@@ -47,16 +47,16 @@ func (s *APIServer) Run() error {
 		})
 	})
 
-	app.GET("/", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{
+	app.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
 			"message": "you hit the Refero API Server",
 		})
 	})
 
 	api := app.Group("/api/v1")
 	{
-		api.GET("/", func(ctx *gin.Context) {
-			ctx.JSON(http.StatusOK, gin.H{
+		api.GET("/", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
 				"message": "you hit the v1 API route of Refero",
 			})
 		})

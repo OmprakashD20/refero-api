@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	errs "github.com/OmprakashD20/refero-api/errors"
 	"github.com/OmprakashD20/refero-api/types"
 	"github.com/OmprakashD20/refero-api/utils"
 	validator "github.com/OmprakashD20/refero-api/validations"
@@ -21,8 +22,11 @@ func NewService(store types.LinkStore) *LinkService {
 
 func (s *LinkService) SetupLinkRoutes(api *gin.RouterGroup) {
 	api.POST("/", validator.ValidateBody[validator.CreateLinkPayload](), s.CreateLinkHandler)
+
 	api.GET("/r/:shortUrl", validator.ValidateParams[validator.RedirectLinkParams](), s.RedirectURLHandler)
+
 	api.PUT("/:id", validator.ValidateParams[validator.UpdateLinkByIDParam](), validator.ValidateBody[validator.UpdateLinkPayload]())
+
 	api.DELETE("/:id", validator.ValidateParams[validator.DeleteLinkByIDParam]())
 }
 
@@ -31,18 +35,14 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 
 	link, ok := validator.GetValidatedData[validator.CreateLinkPayload](c, validator.ValidatedBodyKey)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid Data",
-		})
+		c.Error(errs.BadRequest(errs.ErrInvalidLink))
 		return
 	}
 
 	// Check if link exists
 	linkId, err := s.store.CheckIfLinkExistsByURL(ctx, link.URL)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal Server Error",
-		})
+		c.Error(errs.InternalServerError(errs.WithCause(err)))
 		return
 	}
 
@@ -50,9 +50,7 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 	if linkId != nil {
 		existingCategories, err := s.store.GetCategoriesForLink(ctx, *linkId)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Internal Server Error",
-			})
+			c.Error(errs.InternalServerError(errs.WithCause(err)))
 			return
 		}
 
@@ -73,16 +71,12 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 
 		if len(mappings) > 0 {
 			if err := s.store.AddLinkToCategory(ctx, mappings); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Internal Server Error",
-				})
+				c.Error(errs.InternalServerError(errs.WithCause(err)))
 				return
 			}
 		}
 
-		c.JSON(http.StatusCreated, gin.H{
-			"message": "Link created successfully",
-		})
+		c.JSON(http.StatusCreated, nil)
 		return
 	}
 
@@ -97,9 +91,8 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 	// Insert the link
 	linkId, err = s.store.InsertLink(ctx, link, shortUrl)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to insert link",
-		})
+		c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToCreateLink),
+			errs.WithCause(err)))
 		return
 	}
 
@@ -114,17 +107,12 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 
 	if len(mappings) > 0 {
 		if err := s.store.AddLinkToCategory(ctx, mappings); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Internal Server Error",
-			})
+			c.Error(errs.InternalServerError(errs.WithCause(err)))
 			return
 		}
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Link created successfully",
-		"url":     shortUrl,
-	})
+	c.JSON(http.StatusCreated, nil)
 }
 
 func (s *LinkService) RedirectURLHandler(c *gin.Context) {
@@ -132,18 +120,15 @@ func (s *LinkService) RedirectURLHandler(c *gin.Context) {
 
 	params, ok := validator.GetValidatedData[validator.RedirectLinkParams](c, validator.ValidatedParamKey)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid URL",
-		})
+		c.Error(errs.BadRequest(errs.ErrInvalidLink))
 		return
 	}
 
-	// Get the original link using the short url 
+	// Get the original link using the short url
 	data, err := s.store.GetLinkByShortURL(ctx, params.ShortURL)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "URL not found",
-		})
+		c.Error(errs.NotFound(errs.ErrLinkNotFound))
+		return
 	}
 
 	c.Redirect(http.StatusMovedPermanently, data.Url)

@@ -2,14 +2,12 @@ package links
 
 import (
 	"context"
-	"errors"
 
+	errs "github.com/OmprakashD20/refero-api/errors"
 	"github.com/OmprakashD20/refero-api/repository"
 	"github.com/OmprakashD20/refero-api/types"
 	"github.com/OmprakashD20/refero-api/utils"
 	validator "github.com/OmprakashD20/refero-api/validations"
-
-	"github.com/jackc/pgx/v5"
 )
 
 type Store struct {
@@ -24,11 +22,7 @@ func (s *Store) CheckIfLinkExistsByURL(ctx context.Context, url string) (*string
 	link, err := s.db.CheckIfLinkExistsByURL(ctx, url)
 	if err != nil {
 		// Link doesn't exists in the database
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
-
-		return nil, err
+		return errs.IsErrNoRows[*string](err, nil)
 	}
 
 	return utils.PgUUIDToStringPtr(link.ID), nil
@@ -53,10 +47,8 @@ func (s *Store) InsertLink(ctx context.Context, link validator.CreateLinkPayload
 func (s *Store) GetCategoriesForLink(ctx context.Context, id string) ([]string, error) {
 	categories, err := s.db.GetCategoriesForLink(ctx, utils.ToPgUUID(id))
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
+		// Link doesn't exists in the database
+		return errs.IsErrNoRows[[]string](err, nil)
 	}
 
 	categoryIds := make([]string, len(categories))
@@ -83,11 +75,8 @@ func (s *Store) AddLinkToCategory(ctx context.Context, mappings []types.LinkCate
 func (s *Store) GetLinkByShortURL(ctx context.Context, shortUrl string) (*types.LinkDTO, error) {
 	link, err := s.db.GetLinkByShortURL(ctx, shortUrl)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
-
-		return nil, err
+		// Link doesn't exists in the database
+		return errs.IsErrNoRows[*types.LinkDTO](err, nil)
 	}
 
 	data := &types.LinkDTO{
@@ -100,38 +89,3 @@ func (s *Store) GetLinkByShortURL(ctx context.Context, shortUrl string) (*types.
 
 	return data, nil
 }
-
-// func (s *Store) CheckIfLinkExistsByID(ctx context.Context, id string) (bool, error) {
-// 	_, err := s.db.GetLinkByID(ctx, utils.ToPgUUID(id))
-// 	if err != nil {
-// 		// Link doesn't exists in the database
-// 		if errors.Is(err, pgx.ErrNoRows) {
-// 			return false, nil
-// 		}
-
-// 		return false, err
-// 	}
-
-// 	return true, nil
-// }
-
-// func (s *Store) GetLinkByURL(ctx context.Context, url string) (*types.LinkDTO, error) {
-// 	link, err := s.db.GetLinkByURL(ctx, url)
-// 	if err != nil {
-// 		if errors.Is(err, pgx.ErrNoRows) {
-// 			return nil, nil
-// 		}
-
-// 		return nil, err
-// 	}
-
-// 	data := &types.LinkDTO{
-// 		ID:          *utils.PgUUIDToStringPtr(link.ID),
-// 		Url:         link.Url,
-// 		Title:       link.Title,
-// 		Description: link.Description,
-// 		ShortUrl:    link.ShortUrl,
-// 	}
-
-// 	return data, nil
-// }
