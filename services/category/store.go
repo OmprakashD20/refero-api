@@ -3,7 +3,7 @@ package category
 import (
 	"context"
 
-	db_errors "github.com/OmprakashD20/refero-api/errors"
+	errs "github.com/OmprakashD20/refero-api/errors"
 	"github.com/OmprakashD20/refero-api/repository"
 	"github.com/OmprakashD20/refero-api/types"
 	"github.com/OmprakashD20/refero-api/utils"
@@ -22,7 +22,7 @@ func (s *Store) CheckIfCategoryExistsByName(ctx context.Context, name string) (b
 	_, err := s.db.GetCategoryByName(ctx, name)
 	if err != nil {
 		// Category doesn't exists in the database
-		return db_errors.IsErrNoRows(err, false)
+		return errs.IsErrNoRows(err, false)
 	}
 
 	return true, nil
@@ -32,7 +32,7 @@ func (s *Store) CheckIfCategoryExistsByID(ctx context.Context, id string) (bool,
 	_, err := s.db.GetCategoryByID(ctx, utils.ToPgUUID(id))
 	if err != nil {
 		// Category doesn't exists in the database
-		return db_errors.IsErrNoRows(err, false)
+		return errs.IsErrNoRows(err, false)
 	}
 
 	return true, nil
@@ -55,7 +55,7 @@ func (s *Store) CreateCategory(ctx context.Context, category validator.CreateCat
 func (s *Store) GetAllCategories(ctx context.Context) ([]types.CategoryDTO, error) {
 	data, err := s.db.GetAllCategories(ctx)
 	if err != nil {
-		return db_errors.IsErrNoRows[[]types.CategoryDTO](err, nil)
+		return errs.IsErrNoRows[[]types.CategoryDTO](err, nil)
 	}
 
 	categories := make([]types.CategoryDTO, len(data))
@@ -78,7 +78,7 @@ func (s *Store) GetCategoryByID(ctx context.Context, id string) (*types.Category
 
 	data, err := s.db.GetCategoryByID(ctx, categoryId)
 	if err != nil {
-		return db_errors.IsErrNoRows[*types.CategoryDTO](err, nil)
+		return errs.IsErrNoRows[*types.CategoryDTO](err, nil)
 	}
 
 	category := &types.CategoryDTO{
@@ -102,7 +102,7 @@ func (s *Store) UpdateCategoryByID(ctx context.Context, id string, category vali
 	rows, err := s.db.UpdateCategory(ctx, args)
 	if rows == 0 {
 		// [Category or Parent Category] does not exists in the database
-		return db_errors.ErrCategoryNotFound
+		return errs.ErrCategoryNotFound
 	}
 
 	return err
@@ -113,7 +113,7 @@ func (s *Store) DeleteCategoryByID(ctx context.Context, id string) error {
 
 	if rows == 0 {
 		// Category does not exists in the database
-		return db_errors.ErrCategoryNotFound
+		return errs.ErrCategoryNotFound
 	}
 
 	return err
@@ -122,7 +122,7 @@ func (s *Store) DeleteCategoryByID(ctx context.Context, id string) error {
 func (s *Store) GetLinksForCategory(ctx context.Context, id string) ([]types.LinkDTO, error) {
 	data, err := s.db.GetLinksForCategory(ctx, utils.ToPgUUID(id))
 	if err != nil {
-		return db_errors.IsErrNoRows[[]types.LinkDTO](err, nil)
+		return errs.IsErrNoRows[[]types.LinkDTO](err, nil)
 	}
 
 	links := make([]types.LinkDTO, len(data))

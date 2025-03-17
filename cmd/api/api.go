@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/OmprakashD20/refero-api/middlewares"
 	"github.com/OmprakashD20/refero-api/repository"
 	"github.com/OmprakashD20/refero-api/services/category"
 	"github.com/OmprakashD20/refero-api/services/links"
@@ -36,11 +37,19 @@ func (s *APIServer) Run() error {
 		)
 	}))
 
-	app.Use(gin.Recovery())
+	app.Use(middlewares.RecoveryMiddleware())
+	app.Use(middlewares.ErrorHandler())
+
+	// Handle 404 API routes
+	app.NoRoute(func(c *gin.Context) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "route not found",
+		})
+	})
 
 	app.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
-			"message": "You hit the Refero API Server",
+			"message": "you hit the Refero API Server",
 		})
 	})
 
@@ -48,7 +57,7 @@ func (s *APIServer) Run() error {
 	{
 		api.GET("/", func(ctx *gin.Context) {
 			ctx.JSON(http.StatusOK, gin.H{
-				"message": "You hit the API v1 route of Refero",
+				"message": "you hit the v1 API route of Refero",
 			})
 		})
 

@@ -50,10 +50,8 @@ func ValidateBody[T any]() gin.HandlerFunc {
 			if errors.As(err, &ve) {
 				fe := ve[0]
 				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"error": GetErrorMsg(fe)})
-				return
 			}
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-			return
 		}
 
 		c.Set(ValidatedBodyKey, body)
@@ -69,10 +67,8 @@ func ValidateParams[T any]() gin.HandlerFunc {
 			if errors.As(err, &ve) {
 				fe := ve[0]
 				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"error": GetErrorMsg(fe)})
-				return
 			}
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-			return
 		}
 
 		c.Set(ValidatedParamKey, uriParams)
