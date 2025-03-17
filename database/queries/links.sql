@@ -24,8 +24,8 @@ LIMIT 1;
 SELECT id, url, title, description, short_url FROM links 
 WHERE short_url = $1;
 
--- Insert a new link
--- name: InsertLink :one
+-- Create a new link
+-- name: CreateLink :one
 INSERT INTO links (url, title, description, short_url) 
 VALUES ($1, $2, $3, $4) RETURNING id;
 

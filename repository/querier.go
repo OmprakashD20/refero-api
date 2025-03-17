@@ -27,6 +27,11 @@ type Querier interface {
 	//  INSERT INTO category (name, parent_id, description)
 	//  VALUES ($1, $2, $3) RETURNING id
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) (pgtype.UUID, error)
+	// Create a new link
+	//
+	//  INSERT INTO links (url, title, description, short_url)
+	//  VALUES ($1, $2, $3, $4) RETURNING id
+	CreateLink(ctx context.Context, arg CreateLinkParams) (pgtype.UUID, error)
 	// Delete category
 	//
 	//  DELETE FROM category WHERE id = $1
@@ -95,11 +100,6 @@ type Querier interface {
 	//  FROM category
 	//  WHERE parent_id = $1
 	GetSubcategories(ctx context.Context, parentID pgtype.UUID) ([]GetSubcategoriesRow, error)
-	// Insert a new link
-	//
-	//  INSERT INTO links (url, title, description, short_url)
-	//  VALUES ($1, $2, $3, $4) RETURNING id
-	InsertLink(ctx context.Context, arg InsertLinkParams) (pgtype.UUID, error)
 	// Remove a link from a category
 	//
 	//  DELETE FROM link_category_map

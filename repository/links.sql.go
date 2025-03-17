@@ -36,6 +36,34 @@ func (q *Queries) CheckIfLinkExistsByURL(ctx context.Context, url string) (Check
 	return i, err
 }
 
+const createLink = `-- name: CreateLink :one
+INSERT INTO links (url, title, description, short_url) 
+VALUES ($1, $2, $3, $4) RETURNING id
+`
+
+type CreateLinkParams struct {
+	Url         string `db:"url" json:"url"`
+	Title       string `db:"title" json:"title"`
+	Description string `db:"description" json:"description"`
+	ShortUrl    string `db:"short_url" json:"shortUrl"`
+}
+
+// Create a new link
+//
+//  INSERT INTO links (url, title, description, short_url)
+//  VALUES ($1, $2, $3, $4) RETURNING id
+func (q *Queries) CreateLink(ctx context.Context, arg CreateLinkParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, createLink,
+		arg.Url,
+		arg.Title,
+		arg.Description,
+		arg.ShortUrl,
+	)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const deleteLink = `-- name: DeleteLink :execrows
 DELETE FROM links WHERE id = $1
 `
@@ -214,34 +242,6 @@ func (q *Queries) GetLinksPaginated(ctx context.Context, arg GetLinksPaginatedPa
 		return nil, err
 	}
 	return items, nil
-}
-
-const insertLink = `-- name: InsertLink :one
-INSERT INTO links (url, title, description, short_url) 
-VALUES ($1, $2, $3, $4) RETURNING id
-`
-
-type InsertLinkParams struct {
-	Url         string `db:"url" json:"url"`
-	Title       string `db:"title" json:"title"`
-	Description string `db:"description" json:"description"`
-	ShortUrl    string `db:"short_url" json:"shortUrl"`
-}
-
-// Insert a new link
-//
-//  INSERT INTO links (url, title, description, short_url)
-//  VALUES ($1, $2, $3, $4) RETURNING id
-func (q *Queries) InsertLink(ctx context.Context, arg InsertLinkParams) (pgtype.UUID, error) {
-	row := q.db.QueryRow(ctx, insertLink,
-		arg.Url,
-		arg.Title,
-		arg.Description,
-		arg.ShortUrl,
-	)
-	var id pgtype.UUID
-	err := row.Scan(&id)
-	return id, err
 }
 
 const updateLink = `-- name: UpdateLink :execrows

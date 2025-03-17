@@ -89,7 +89,7 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 	shortUrl := utils.GenerateShortURL(link.URL)
 
 	// Insert the link
-	linkId, err = s.store.InsertLink(ctx, link, shortUrl)
+	linkId, err = s.store.CreateLink(ctx, link, shortUrl)
 	if err != nil {
 		c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToCreateLink),
 			errs.WithCause(err)))

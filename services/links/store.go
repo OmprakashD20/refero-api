@@ -28,15 +28,15 @@ func (s *Store) CheckIfLinkExistsByURL(ctx context.Context, url string) (*string
 	return utils.PgUUIDToStringPtr(link.ID), nil
 }
 
-func (s *Store) InsertLink(ctx context.Context, link validator.CreateLinkPayload, shortUrl string) (*string, error) {
-	args := repository.InsertLinkParams{
+func (s *Store) CreateLink(ctx context.Context, link validator.CreateLinkPayload, shortUrl string) (*string, error) {
+	args := repository.CreateLinkParams{
 		Title:       link.Title,
 		Description: *link.Description,
 		Url:         link.URL,
 		ShortUrl:    shortUrl,
 	}
 
-	linkId, err := s.db.InsertLink(ctx, args)
+	linkId, err := s.db.CreateLink(ctx, args)
 	if !linkId.Valid {
 		return nil, err
 	}
