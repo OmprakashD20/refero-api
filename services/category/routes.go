@@ -21,11 +21,14 @@ func NewService(store types.CategoryStore) *CategoryService {
 
 func (s *CategoryService) SetupCategoryRoutes(api *gin.RouterGroup) {
 	api.POST("/", validator.ValidateBody[validator.CreateCategoryPayload](), s.CreateCategoryHandler)
+
 	api.GET("/", s.GetCategoriesHandler)
 	api.GET("/:id", validator.ValidateParams[validator.GetCategoryByIDParam](), s.GetCategoryByIDHandler)
-	api.PUT("/:id", validator.ValidateParams[validator.UpdateCategoryByIDParam](), validator.ValidateBody[validator.UpdateCategoryPayload](), s.UpdateCategoryByIDHandler)
-	api.DELETE("/:id", validator.ValidateParams[validator.DeleteCategoryByIDParam](), s.DeleteCategoryByIDHandler)
 	api.GET("/:id/links", validator.ValidateParams[validator.GetLinksForCategoryParams](), s.GetLinksForCategoryHandler)
+
+	api.PUT("/:id", validator.ValidateParams[validator.UpdateCategoryByIDParam](), validator.ValidateBody[validator.UpdateCategoryPayload](), s.UpdateCategoryByIDHandler)
+
+	api.DELETE("/:id", validator.ValidateParams[validator.DeleteCategoryByIDParam](), s.DeleteCategoryByIDHandler)
 }
 
 func (s *CategoryService) CreateCategoryHandler(c *gin.Context) {
@@ -159,7 +162,7 @@ func (s *CategoryService) UpdateCategoryByIDHandler(c *gin.Context) {
 func (s *CategoryService) DeleteCategoryByIDHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	params, ok := validator.GetValidatedData[validator.UpdateCategoryByIDParam](c, validator.ValidatedParamKey)
+	params, ok := validator.GetValidatedData[validator.DeleteCategoryByIDParam](c, validator.ValidatedParamKey)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid Category",
