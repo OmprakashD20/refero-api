@@ -134,3 +134,14 @@ func (s *Store) RemoveLinkToCategory(ctx context.Context, mappings []types.LinkC
 
 	return batchErr
 }
+
+func (s *Store) DeleteLinkByID(ctx context.Context, id string) error {
+	rows, err := s.db.DeleteLink(ctx, utils.ToPgUUID(id))
+
+	if rows == 0 {
+		// Link does not exists in the database
+		return errs.ErrLinkNotFound
+	}
+
+	return err
+}

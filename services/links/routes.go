@@ -130,7 +130,7 @@ func (s *LinkService) RedirectURLHandler(c *gin.Context) {
 	if err != nil {
 		c.Error(errs.NotFound(errs.ErrLinkNotFound))
 		return
-	}	
+	}
 
 	c.Redirect(http.StatusMovedPermanently, data.Url)
 }
@@ -214,4 +214,26 @@ func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, nil)
 }
 
-func (s *LinkService) DeleteLinkByIDHandler(c *gin.Context) {}
+func (s *LinkService) DeleteLinkByIDHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	params, ok := validator.GetValidatedData[validator.DeleteLinkByIDParam](c, validator.ValidatedParamKey)
+	if !ok {
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
+		return
+	}
+
+	// Delete the link
+	if err := s.store.DeleteLinkByID(ctx, params.Id); err != nil {
+		// If link doesn't exists
+		if errors.Is(err, errs.ErrLinkNotFound) {
+			c.Error(errs.NotFound(errs.ErrLinkNotFound))
+			return
+		}
+
+		c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToDeleteLink), errs.WithCause(err)))
+		return
+	}
+
+	c.JSON(http.StatusOK, nil)
+}

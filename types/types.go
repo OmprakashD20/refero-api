@@ -26,7 +26,7 @@ type LinkStore interface {
 	GetLinkByShortURL(ctx context.Context, shortUrl string) (*LinkDTO, error)
 	GetCategoriesForLink(ctx context.Context, id string) ([]string, error)
 	UpdateLinkByID(ctx context.Context, id string, link validator.UpdateLinkPayload) error
-	// DeleteLinkByID(ctx context.Context, id string) error
+	DeleteLinkByID(ctx context.Context, id string) error
 }
 
 type CategoryDTO struct {
