@@ -158,15 +158,15 @@ func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {
 			return
 		}
 
-		c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateCategory), errs.WithCause(err)))
+		c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err)))
 		return
 	}
 
 	// Get the existing categories associated with the link
 	existingCategories, err := s.store.GetCategoriesForLink(ctx, params.Id)
 	if err != nil {
-		c.Error(errs.InternalServerError(errs.WithCause(err)))
-	}	
+		c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err)))
+	}
 
 	existingCategorySet := make(map[string]struct{}, len(existingCategories))
 	for _, categoryID := range existingCategories {
@@ -200,13 +200,13 @@ func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {
 
 	if len(categoriesToAdd) > 0 {
 		if err := s.store.AddLinkToCategory(ctx, categoriesToAdd); err != nil {
-			c.Error(errs.InternalServerError(errs.WithCause(err)))
+			c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err)))
 			return
 		}
 	}
 	if len(categoriesToRemove) > 0 {
 		if err := s.store.RemoveLinkToCategory(ctx, categoriesToRemove); err != nil {
-			c.Error(errs.InternalServerError(errs.WithCause(err)))
+			c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err)))
 			return
 		}
 	}
