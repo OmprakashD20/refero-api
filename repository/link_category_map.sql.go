@@ -142,25 +142,3 @@ func (q *Queries) GetUncategorizedLinks(ctx context.Context) ([]Link, error) {
 	}
 	return items, nil
 }
-
-const removeLinkFromCategory = `-- name: RemoveLinkFromCategory :execrows
-DELETE FROM link_category_map 
-WHERE link_id = $1 AND category_id = $2
-`
-
-type RemoveLinkFromCategoryParams struct {
-	LinkID     pgtype.UUID `db:"link_id" json:"linkId"`
-	CategoryID pgtype.UUID `db:"category_id" json:"categoryId"`
-}
-
-// Remove a link from a category
-//
-//  DELETE FROM link_category_map
-//  WHERE link_id = $1 AND category_id = $2
-func (q *Queries) RemoveLinkFromCategory(ctx context.Context, arg RemoveLinkFromCategoryParams) (int64, error) {
-	result, err := q.db.Exec(ctx, removeLinkFromCategory, arg.LinkID, arg.CategoryID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}

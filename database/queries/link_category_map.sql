@@ -27,6 +27,6 @@ WHERE NOT EXISTS (
 INSERT INTO link_category_map (link_id, category_id) VALUES ($1, $2);
 
 -- Remove a link from a category
--- name: RemoveLinkFromCategory :execrows
+-- name: RemoveLinkFromCategory :batchexec
 DELETE FROM link_category_map 
 WHERE link_id = $1 AND category_id = $2;

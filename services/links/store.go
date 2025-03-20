@@ -89,3 +89,48 @@ func (s *Store) GetLinkByShortURL(ctx context.Context, shortUrl string) (*types.
 
 	return data, nil
 }
+
+func (s *Store) UpdateLinkByID(ctx context.Context, id string, link validator.UpdateLinkPayload) error {
+	args := repository.UpdateLinkParams{
+		ID:          utils.ToPgUUID(id),
+		Title:       link.Title,
+		Description: *link.Description,
+	}
+
+	rows, err := s.db.UpdateLink(ctx, args)
+	if rows == 0 {
+		// Link does not exists in the database
+		return errs.ErrLinkNotFound
+	}
+
+	return err
+}
+
+func (s *Store) RemoveLinkToCategory(ctx context.Context, mappings []types.LinkCategoryDTO) error {
+	var args []repository.RemoveLinkFromCategoryParams
+
+	for _, obj := range mappings {
+		args = append(args, repository.RemoveLinkFromCategoryParams{
+			LinkID:     utils.ToPgUUID(obj.LinkID),
+			CategoryID: utils.ToPgUUID(obj.CategoryID),
+		})
+	}
+
+	// Execute batch deletion
+	deleteBatch := s.db.RemoveLinkFromCategory(ctx, args)
+
+	// Execute each deletion in the batch
+	var batchErr error
+	deleteBatch.Exec(func(i int, err error) {
+		if err != nil {
+			batchErr = errs.InternalServerError(errs.WithCause(err))
+		}
+	})
+
+	// Close the batch
+	if err := deleteBatch.Close(); err != nil {
+		return err
+	}
+
+	return batchErr
+}

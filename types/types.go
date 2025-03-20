@@ -20,11 +20,12 @@ type CategoryStore interface {
 
 type LinkStore interface {
 	AddLinkToCategory(ctx context.Context, mappings []LinkCategoryDTO) error
+	RemoveLinkToCategory(ctx context.Context, mappings []LinkCategoryDTO) error
 	CheckIfLinkExistsByURL(ctx context.Context, url string) (*string, error)
 	CreateLink(ctx context.Context, link validator.CreateLinkPayload, shortUrl string) (*string, error)
 	GetLinkByShortURL(ctx context.Context, shortUrl string) (*LinkDTO, error)
 	GetCategoriesForLink(ctx context.Context, id string) ([]string, error)
-	// UpdateLinkByID(ctx context.Context, id string, link validator.UpdateLinkPayload) error
+	UpdateLinkByID(ctx context.Context, id string, link validator.UpdateLinkPayload) error
 	// DeleteLinkByID(ctx context.Context, id string) error
 }
 

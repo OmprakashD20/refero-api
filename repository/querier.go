@@ -114,7 +114,7 @@ type Querier interface {
 	//
 	//  DELETE FROM link_category_map
 	//  WHERE link_id = $1 AND category_id = $2
-	RemoveLinkFromCategory(ctx context.Context, arg RemoveLinkFromCategoryParams) (int64, error)
+	RemoveLinkFromCategory(ctx context.Context, arg []RemoveLinkFromCategoryParams) *RemoveLinkFromCategoryBatchResults
 	// Update category details
 	//
 	//  UPDATE category

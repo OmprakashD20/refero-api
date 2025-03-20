@@ -1,6 +1,7 @@
 package links
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -129,10 +130,88 @@ func (s *LinkService) RedirectURLHandler(c *gin.Context) {
 	if err != nil {
 		c.Error(errs.NotFound(errs.ErrLinkNotFound))
 		return
-	}
+	}	
 
 	c.Redirect(http.StatusMovedPermanently, data.Url)
 }
 
-func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {}
+func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	params, ok := validator.GetValidatedData[validator.UpdateLinkByIDParam](c, validator.ValidatedParamKey)
+	if !ok {
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
+		return
+	}
+
+	link, ok := validator.GetValidatedData[validator.UpdateLinkPayload](c, validator.ValidatedBodyKey)
+	if !ok {
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
+		return
+	}
+
+	// Update the link
+	if err := s.store.UpdateLinkByID(ctx, params.Id, link); err != nil {
+		// If link doesn't exists
+		if errors.Is(err, errs.ErrLinkNotFound) {
+			c.Error(errs.NotFound(errs.ErrLinkNotFound))
+			return
+		}
+
+		c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateCategory), errs.WithCause(err)))
+		return
+	}
+
+	// Get the existing categories associated with the link
+	existingCategories, err := s.store.GetCategoriesForLink(ctx, params.Id)
+	if err != nil {
+		c.Error(errs.InternalServerError(errs.WithCause(err)))
+	}	
+
+	existingCategorySet := make(map[string]struct{}, len(existingCategories))
+	for _, categoryID := range existingCategories {
+		existingCategorySet[categoryID] = struct{}{}
+	}
+
+	newCategorySet := make(map[string]struct{}, len(link.CategoryIDs))
+	for _, categoryID := range link.CategoryIDs {
+		newCategorySet[categoryID] = struct{}{}
+	}
+
+	var categoriesToRemove []types.LinkCategoryDTO
+	for _, categoryID := range existingCategories {
+		if _, exists := newCategorySet[categoryID]; !exists {
+			categoriesToRemove = append(categoriesToRemove, types.LinkCategoryDTO{
+				LinkID:     params.Id,
+				CategoryID: categoryID,
+			})
+		}
+	}
+
+	var categoriesToAdd []types.LinkCategoryDTO
+	for _, categoryID := range link.CategoryIDs {
+		if _, exists := existingCategorySet[categoryID]; !exists {
+			categoriesToAdd = append(categoriesToAdd, types.LinkCategoryDTO{
+				LinkID:     params.Id,
+				CategoryID: categoryID,
+			})
+		}
+	}
+
+	if len(categoriesToAdd) > 0 {
+		if err := s.store.AddLinkToCategory(ctx, categoriesToAdd); err != nil {
+			c.Error(errs.InternalServerError(errs.WithCause(err)))
+			return
+		}
+	}
+	if len(categoriesToRemove) > 0 {
+		if err := s.store.RemoveLinkToCategory(ctx, categoriesToRemove); err != nil {
+			c.Error(errs.InternalServerError(errs.WithCause(err)))
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, nil)
+}
+
 func (s *LinkService) DeleteLinkByIDHandler(c *gin.Context) {}
