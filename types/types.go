@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/OmprakashD20/refero-api/repository"
 	validator "github.com/OmprakashD20/refero-api/validations"
 )
 
@@ -19,14 +20,18 @@ type CategoryStore interface {
 }
 
 type LinkStore interface {
-	AddLinkToCategory(ctx context.Context, mappings []LinkCategoryDTO) error
-	RemoveLinkToCategory(ctx context.Context, mappings []LinkCategoryDTO) error
-	CheckIfLinkExistsByURL(ctx context.Context, url string) (*string, error)
-	CreateLink(ctx context.Context, link validator.CreateLinkPayload, shortUrl string) (*string, error)
-	GetLinkByShortURL(ctx context.Context, shortUrl string) (*LinkDTO, error)
-	GetCategoriesForLink(ctx context.Context, id string) ([]string, error)
-	UpdateLinkByID(ctx context.Context, id string, link validator.UpdateLinkPayload) error
-	DeleteLinkByID(ctx context.Context, id string) error
+	AddLinkToCategory(ctx context.Context, mappings []LinkCategoryDTO, txn *repository.Queries) error
+	RemoveLinkToCategory(ctx context.Context, mappings []LinkCategoryDTO, txn *repository.Queries) error
+	CheckIfLinkExistsByURL(ctx context.Context, url string, txn *repository.Queries) (*string, error)
+	CreateLink(ctx context.Context, link validator.CreateLinkPayload, shortUrl string, txn *repository.Queries) (*string, error)
+	GetLinkByShortURL(ctx context.Context, shortUrl string, txn *repository.Queries) (*LinkDTO, error)
+	GetCategoriesForLink(ctx context.Context, id string, txn *repository.Queries) ([]string, error)
+	UpdateLinkByID(ctx context.Context, id string, link validator.UpdateLinkPayload, txn *repository.Queries) error
+	DeleteLinkByID(ctx context.Context, id string, txn *repository.Queries) error
+}
+
+type TransactionStore interface {
+	Exec(ctx context.Context, fn func(q *repository.Queries) error) error
 }
 
 type CategoryDTO struct {

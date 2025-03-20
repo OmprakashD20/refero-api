@@ -3,6 +3,8 @@ package links
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	errs "github.com/OmprakashD20/refero-api/errors"
 	"github.com/OmprakashD20/refero-api/repository"
 	"github.com/OmprakashD20/refero-api/types"
@@ -11,15 +13,19 @@ import (
 )
 
 type Store struct {
-	db *repository.Queries
+	conn *pgxpool.Pool
+	db   *repository.Queries
 }
 
-func NewStore(db *repository.Queries) *Store {
-	return &Store{db}
+func NewStore(conn *pgxpool.Pool) *Store {
+	return &Store{conn: conn, db: repository.New(conn)}
 }
 
-func (s *Store) CheckIfLinkExistsByURL(ctx context.Context, url string) (*string, error) {
-	link, err := s.db.CheckIfLinkExistsByURL(ctx, url)
+func (s *Store) CheckIfLinkExistsByURL(ctx context.Context, url string, txn *repository.Queries) (*string, error) {
+	if txn != nil {
+		txn = s.db
+	}
+	link, err := txn.CheckIfLinkExistsByURL(ctx, url)
 	if err != nil {
 		// Link doesn't exists in the database
 		return errs.IsErrNoRows[*string](err, nil)
@@ -28,7 +34,10 @@ func (s *Store) CheckIfLinkExistsByURL(ctx context.Context, url string) (*string
 	return utils.PgUUIDToStringPtr(link.ID), nil
 }
 
-func (s *Store) CreateLink(ctx context.Context, link validator.CreateLinkPayload, shortUrl string) (*string, error) {
+func (s *Store) CreateLink(ctx context.Context, link validator.CreateLinkPayload, shortUrl string, txn *repository.Queries) (*string, error) {
+	if txn != nil {
+		txn = s.db
+	}
 	args := repository.CreateLinkParams{
 		Title:       link.Title,
 		Description: *link.Description,
@@ -36,7 +45,7 @@ func (s *Store) CreateLink(ctx context.Context, link validator.CreateLinkPayload
 		ShortUrl:    shortUrl,
 	}
 
-	linkId, err := s.db.CreateLink(ctx, args)
+	linkId, err := txn.CreateLink(ctx, args)
 	if !linkId.Valid {
 		return nil, err
 	}
@@ -44,8 +53,11 @@ func (s *Store) CreateLink(ctx context.Context, link validator.CreateLinkPayload
 	return utils.PgUUIDToStringPtr(linkId), nil
 }
 
-func (s *Store) GetCategoriesForLink(ctx context.Context, id string) ([]string, error) {
-	categories, err := s.db.GetCategoriesForLink(ctx, utils.ToPgUUID(id))
+func (s *Store) GetCategoriesForLink(ctx context.Context, id string, txn *repository.Queries) ([]string, error) {
+	if txn != nil {
+		txn = s.db
+	}
+	categories, err := txn.GetCategoriesForLink(ctx, utils.ToPgUUID(id))
 	if err != nil {
 		// Link doesn't exists in the database
 		return errs.IsErrNoRows[[]string](err, nil)
@@ -58,7 +70,10 @@ func (s *Store) GetCategoriesForLink(ctx context.Context, id string) ([]string, 
 	return categoryIds, nil
 }
 
-func (s *Store) AddLinkToCategory(ctx context.Context, mappings []types.LinkCategoryDTO) error {
+func (s *Store) AddLinkToCategory(ctx context.Context, mappings []types.LinkCategoryDTO, txn *repository.Queries) error {
+	if txn != nil {
+		txn = s.db
+	}
 	var args []repository.AddLinkToCategoryParams
 
 	for _, obj := range mappings {
@@ -68,12 +83,15 @@ func (s *Store) AddLinkToCategory(ctx context.Context, mappings []types.LinkCate
 		})
 	}
 
-	_, err := s.db.AddLinkToCategory(ctx, args)
+	_, err := txn.AddLinkToCategory(ctx, args)
 	return err
 }
 
-func (s *Store) GetLinkByShortURL(ctx context.Context, shortUrl string) (*types.LinkDTO, error) {
-	link, err := s.db.GetLinkByShortURL(ctx, shortUrl)
+func (s *Store) GetLinkByShortURL(ctx context.Context, shortUrl string, txn *repository.Queries) (*types.LinkDTO, error) {
+	if txn != nil {
+		txn = s.db
+	}
+	link, err := txn.GetLinkByShortURL(ctx, shortUrl)
 	if err != nil {
 		// Link doesn't exists in the database
 		return errs.IsErrNoRows[*types.LinkDTO](err, nil)
@@ -90,14 +108,17 @@ func (s *Store) GetLinkByShortURL(ctx context.Context, shortUrl string) (*types.
 	return data, nil
 }
 
-func (s *Store) UpdateLinkByID(ctx context.Context, id string, link validator.UpdateLinkPayload) error {
+func (s *Store) UpdateLinkByID(ctx context.Context, id string, link validator.UpdateLinkPayload, txn *repository.Queries) error {
+	if txn != nil {
+		txn = s.db
+	}
 	args := repository.UpdateLinkParams{
 		ID:          utils.ToPgUUID(id),
 		Title:       link.Title,
 		Description: *link.Description,
 	}
 
-	rows, err := s.db.UpdateLink(ctx, args)
+	rows, err := txn.UpdateLink(ctx, args)
 	if rows == 0 {
 		// Link does not exists in the database
 		return errs.ErrLinkNotFound
@@ -106,7 +127,10 @@ func (s *Store) UpdateLinkByID(ctx context.Context, id string, link validator.Up
 	return err
 }
 
-func (s *Store) RemoveLinkToCategory(ctx context.Context, mappings []types.LinkCategoryDTO) error {
+func (s *Store) RemoveLinkToCategory(ctx context.Context, mappings []types.LinkCategoryDTO, txn *repository.Queries) error {
+	if txn != nil {
+		txn = s.db
+	}
 	var args []repository.RemoveLinkFromCategoryParams
 
 	for _, obj := range mappings {
@@ -117,13 +141,13 @@ func (s *Store) RemoveLinkToCategory(ctx context.Context, mappings []types.LinkC
 	}
 
 	// Execute batch deletion
-	deleteBatch := s.db.RemoveLinkFromCategory(ctx, args)
+	deleteBatch := txn.RemoveLinkFromCategory(ctx, args)
 
 	// Execute each deletion in the batch
 	var batchErr error
 	deleteBatch.Exec(func(i int, err error) {
 		if err != nil {
-			batchErr = errs.InternalServerError(errs.WithCause(err))
+			batchErr = err
 		}
 	})
 
@@ -135,8 +159,11 @@ func (s *Store) RemoveLinkToCategory(ctx context.Context, mappings []types.LinkC
 	return batchErr
 }
 
-func (s *Store) DeleteLinkByID(ctx context.Context, id string) error {
-	rows, err := s.db.DeleteLink(ctx, utils.ToPgUUID(id))
+func (s *Store) DeleteLinkByID(ctx context.Context, id string, txn *repository.Queries) error {
+	if txn != nil {
+		txn = s.db
+	}
+	rows, err := txn.DeleteLink(ctx, utils.ToPgUUID(id))
 
 	if rows == 0 {
 		// Link does not exists in the database

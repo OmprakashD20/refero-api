@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	errs "github.com/OmprakashD20/refero-api/errors"
+	"github.com/OmprakashD20/refero-api/repository"
 	"github.com/OmprakashD20/refero-api/types"
 	"github.com/OmprakashD20/refero-api/utils"
 	validator "github.com/OmprakashD20/refero-api/validations"
@@ -15,10 +16,11 @@ import (
 
 type LinkService struct {
 	store types.LinkStore
+	txn   types.TransactionStore
 }
 
-func NewService(store types.LinkStore) *LinkService {
-	return &LinkService{store}
+func NewService(store types.LinkStore, txn types.TransactionStore) *LinkService {
+	return &LinkService{store, txn}
 }
 
 func (s *LinkService) SetupLinkRoutes(api *gin.RouterGroup) {
@@ -41,7 +43,7 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 	}
 
 	// Check if link exists
-	linkId, err := s.store.CheckIfLinkExistsByURL(ctx, link.URL)
+	linkId, err := s.store.CheckIfLinkExistsByURL(ctx, link.URL, nil)
 	if err != nil {
 		c.Error(errs.InternalServerError(errs.WithCause(err)))
 		return
@@ -49,32 +51,39 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 
 	// If exists, associate the existing link with new categories
 	if linkId != nil {
-		existingCategories, err := s.store.GetCategoriesForLink(ctx, *linkId)
+		err := s.txn.Exec(ctx, func(q *repository.Queries) error {
+			existingCategories, err := s.store.GetCategoriesForLink(ctx, *linkId, q)
+			if err != nil {
+				return errs.InternalServerError(errs.WithCause(err))
+			}
+
+			existingCategorySet := make(map[string]struct{}, len(existingCategories))
+			for _, categoryID := range existingCategories {
+				existingCategorySet[categoryID] = struct{}{}
+			}
+
+			var mappings []types.LinkCategoryDTO
+			for _, categoryID := range link.CategoryIDs {
+				if _, exists := existingCategorySet[categoryID]; !exists {
+					mappings = append(mappings, types.LinkCategoryDTO{
+						LinkID:     *linkId,
+						CategoryID: categoryID,
+					})
+				}
+			}
+
+			if len(mappings) > 0 {
+				if err := s.store.AddLinkToCategory(ctx, mappings, q); err != nil {
+					return errs.InternalServerError(errs.WithCause(err))
+				}
+			}
+
+			return nil
+		})
+
 		if err != nil {
-			c.Error(errs.InternalServerError(errs.WithCause(err)))
+			c.Error(err)
 			return
-		}
-
-		existingCategorySet := make(map[string]struct{}, len(existingCategories))
-		for _, categoryID := range existingCategories {
-			existingCategorySet[categoryID] = struct{}{}
-		}
-
-		var mappings []types.LinkCategoryDTO
-		for _, categoryID := range link.CategoryIDs {
-			if _, exists := existingCategorySet[categoryID]; !exists {
-				mappings = append(mappings, types.LinkCategoryDTO{
-					LinkID:     *linkId,
-					CategoryID: categoryID,
-				})
-			}
-		}
-
-		if len(mappings) > 0 {
-			if err := s.store.AddLinkToCategory(ctx, mappings); err != nil {
-				c.Error(errs.InternalServerError(errs.WithCause(err)))
-				return
-			}
 		}
 
 		c.JSON(http.StatusCreated, nil)
@@ -90,27 +99,34 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 	shortUrl := utils.GenerateShortURL(link.URL)
 
 	// Insert the link
-	linkId, err = s.store.CreateLink(ctx, link, shortUrl)
-	if err != nil {
-		c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToCreateLink),
-			errs.WithCause(err)))
-		return
-	}
-
-	// Associate the link with its categories
-	var mappings []types.LinkCategoryDTO
-	for _, categoryID := range link.CategoryIDs {
-		mappings = append(mappings, types.LinkCategoryDTO{
-			LinkID:     *linkId,
-			CategoryID: categoryID,
-		})
-	}
-
-	if len(mappings) > 0 {
-		if err := s.store.AddLinkToCategory(ctx, mappings); err != nil {
-			c.Error(errs.InternalServerError(errs.WithCause(err)))
-			return
+	err = s.txn.Exec(ctx, func(q *repository.Queries) error {
+		var err error
+		linkId, err = s.store.CreateLink(ctx, link, shortUrl, q)
+		if err != nil {
+			return errs.InternalServerError(errs.WithError(errs.ErrFailedToCreateLink), errs.WithCause(err))
 		}
+
+		// Associate the link with its categories
+		var mappings []types.LinkCategoryDTO
+		for _, categoryID := range link.CategoryIDs {
+			mappings = append(mappings, types.LinkCategoryDTO{
+				LinkID:     *linkId,
+				CategoryID: categoryID,
+			})
+		}
+
+		if len(mappings) > 0 {
+			if err := s.store.AddLinkToCategory(ctx, mappings, q); err != nil {
+				return errs.InternalServerError(errs.WithCause(err))
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		c.Error(err)
+		return
 	}
 
 	c.JSON(http.StatusCreated, nil)
@@ -126,7 +142,7 @@ func (s *LinkService) RedirectURLHandler(c *gin.Context) {
 	}
 
 	// Get the original link using the short url
-	data, err := s.store.GetLinkByShortURL(ctx, params.ShortURL)
+	data, err := s.store.GetLinkByShortURL(ctx, params.ShortURL, nil)
 	if err != nil {
 		c.Error(errs.NotFound(errs.ErrLinkNotFound))
 		return
@@ -150,65 +166,69 @@ func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {
 		return
 	}
 
-	// Update the link
-	if err := s.store.UpdateLinkByID(ctx, params.Id, link); err != nil {
-		// If link doesn't exists
-		if errors.Is(err, errs.ErrLinkNotFound) {
-			c.Error(errs.NotFound(errs.ErrLinkNotFound))
-			return
+	err := s.txn.Exec(ctx, func(q *repository.Queries) error {
+		// Update the link
+		if err := s.store.UpdateLinkByID(ctx, params.Id, link, q); err != nil {
+			// If link doesn't exists
+			if errors.Is(err, errs.ErrLinkNotFound) {
+				return errs.NotFound(errs.ErrLinkNotFound)
+			}
+			return errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err))
 		}
 
-		c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err)))
-		return
-	}
+		// Get the existing categories associated with the link
+		existingCategories, err := s.store.GetCategoriesForLink(ctx, params.Id, q)
+		if err != nil {
+			return errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err))
+		}
 
-	// Get the existing categories associated with the link
-	existingCategories, err := s.store.GetCategoriesForLink(ctx, params.Id)
+		existingCategorySet := make(map[string]struct{}, len(existingCategories))
+		for _, categoryID := range existingCategories {
+			existingCategorySet[categoryID] = struct{}{}
+		}
+
+		newCategorySet := make(map[string]struct{}, len(link.CategoryIDs))
+		for _, categoryID := range link.CategoryIDs {
+			newCategorySet[categoryID] = struct{}{}
+		}
+
+		var categoriesToRemove []types.LinkCategoryDTO
+		for _, categoryID := range existingCategories {
+			if _, exists := newCategorySet[categoryID]; !exists {
+				categoriesToRemove = append(categoriesToRemove, types.LinkCategoryDTO{
+					LinkID:     params.Id,
+					CategoryID: categoryID,
+				})
+			}
+		}
+
+		var categoriesToAdd []types.LinkCategoryDTO
+		for _, categoryID := range link.CategoryIDs {
+			if _, exists := existingCategorySet[categoryID]; !exists {
+				categoriesToAdd = append(categoriesToAdd, types.LinkCategoryDTO{
+					LinkID:     params.Id,
+					CategoryID: categoryID,
+				})
+			}
+		}
+
+		if len(categoriesToAdd) > 0 {
+			if err := s.store.AddLinkToCategory(ctx, categoriesToAdd, q); err != nil {
+				return errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err))
+			}
+		}
+		if len(categoriesToRemove) > 0 {
+			if err := s.store.RemoveLinkToCategory(ctx, categoriesToRemove, q); err != nil {
+				return errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err))
+			}
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err)))
-	}
-
-	existingCategorySet := make(map[string]struct{}, len(existingCategories))
-	for _, categoryID := range existingCategories {
-		existingCategorySet[categoryID] = struct{}{}
-	}
-
-	newCategorySet := make(map[string]struct{}, len(link.CategoryIDs))
-	for _, categoryID := range link.CategoryIDs {
-		newCategorySet[categoryID] = struct{}{}
-	}
-
-	var categoriesToRemove []types.LinkCategoryDTO
-	for _, categoryID := range existingCategories {
-		if _, exists := newCategorySet[categoryID]; !exists {
-			categoriesToRemove = append(categoriesToRemove, types.LinkCategoryDTO{
-				LinkID:     params.Id,
-				CategoryID: categoryID,
-			})
-		}
-	}
-
-	var categoriesToAdd []types.LinkCategoryDTO
-	for _, categoryID := range link.CategoryIDs {
-		if _, exists := existingCategorySet[categoryID]; !exists {
-			categoriesToAdd = append(categoriesToAdd, types.LinkCategoryDTO{
-				LinkID:     params.Id,
-				CategoryID: categoryID,
-			})
-		}
-	}
-
-	if len(categoriesToAdd) > 0 {
-		if err := s.store.AddLinkToCategory(ctx, categoriesToAdd); err != nil {
-			c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err)))
-			return
-		}
-	}
-	if len(categoriesToRemove) > 0 {
-		if err := s.store.RemoveLinkToCategory(ctx, categoriesToRemove); err != nil {
-			c.Error(errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err)))
-			return
-		}
+		c.Error(err)
+		return
 	}
 
 	c.JSON(http.StatusOK, nil)
@@ -224,7 +244,7 @@ func (s *LinkService) DeleteLinkByIDHandler(c *gin.Context) {
 	}
 
 	// Delete the link
-	if err := s.store.DeleteLinkByID(ctx, params.Id); err != nil {
+	if err := s.store.DeleteLinkByID(ctx, params.Id, nil); err != nil {
 		// If link doesn't exists
 		if errors.Is(err, errs.ErrLinkNotFound) {
 			c.Error(errs.NotFound(errs.ErrLinkNotFound))

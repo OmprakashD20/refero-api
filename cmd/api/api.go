@@ -6,20 +6,21 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/OmprakashD20/refero-api/database"
 	"github.com/OmprakashD20/refero-api/middlewares"
-	"github.com/OmprakashD20/refero-api/repository"
 	"github.com/OmprakashD20/refero-api/services/category"
 	"github.com/OmprakashD20/refero-api/services/links"
 )
 
 type APIServer struct {
 	port string
-	db   *repository.Queries
+	conn *pgxpool.Pool
 }
 
-func NewAPIServer(port string, db *repository.Queries) *APIServer {
-	return &APIServer{port, db}
+func NewAPIServer(port string, conn *pgxpool.Pool) *APIServer {
+	return &APIServer{port, conn}
 }
 
 func (s *APIServer) Run() error {
@@ -61,14 +62,16 @@ func (s *APIServer) Run() error {
 			})
 		})
 
+		txnStore := database.NewTransactionStore(s.conn)
+
 		// Category Routes
-		categoryStore := category.NewStore(s.db)
+		categoryStore := category.NewStore(s.conn)
 		categoryService := category.NewService(categoryStore)
 		categoryService.SetupCategoryRoutes(api.Group("/category"))
 
 		// Link Routes
-		linkStore := links.NewStore(s.db)
-		LinkService := links.NewService(linkStore)
+		linkStore := links.NewStore(s.conn)
+		LinkService := links.NewService(linkStore, txnStore)
 		LinkService.SetupLinkRoutes(api.Group("/link"))
 	}
 

@@ -3,6 +3,8 @@ package category
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	errs "github.com/OmprakashD20/refero-api/errors"
 	"github.com/OmprakashD20/refero-api/repository"
 	"github.com/OmprakashD20/refero-api/types"
@@ -11,11 +13,12 @@ import (
 )
 
 type Store struct {
-	db *repository.Queries
+	conn *pgxpool.Pool
+	db   *repository.Queries
 }
 
-func NewStore(db *repository.Queries) *Store {
-	return &Store{db}
+func NewStore(conn *pgxpool.Pool) *Store {
+	return &Store{conn: conn, db: repository.New(conn)}
 }
 
 func (s *Store) CheckIfCategoryExistsByName(ctx context.Context, name string) (bool, error) {

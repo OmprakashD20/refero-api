@@ -8,7 +8,6 @@ import (
 	"github.com/OmprakashD20/refero-api/cmd/api"
 	"github.com/OmprakashD20/refero-api/config"
 	"github.com/OmprakashD20/refero-api/database"
-	"github.com/OmprakashD20/refero-api/repository"
 )
 
 func main() {
@@ -25,11 +24,8 @@ func main() {
 
 	log.Println("Connected to the database successfully")
 
-	// Init SQLC Queries
-	db := repository.New(conn)
-
 	// Run the server
-	server := api.NewAPIServer(config.Envs.Port, db)
+	server := api.NewAPIServer(config.Envs.Port, conn)
 
 	if err := server.Run(); err != nil {
 		log.Fatalf("Failed to run the server: %v", err)
