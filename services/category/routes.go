@@ -36,7 +36,7 @@ func (s *CategoryService) CreateCategoryHandler(c *gin.Context) {
 
 	category, ok := validator.GetValidatedData[validator.CreateCategoryPayload](c, validator.ValidatedBodyKey)
 	if !ok {
-		c.Error(errs.BadRequest(errs.ErrInvalidCategory))
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
 		return
 	}
 
@@ -85,7 +85,7 @@ func (s *CategoryService) GetCategoryByIDHandler(c *gin.Context) {
 
 	params, ok := validator.GetValidatedData[validator.GetCategoryByIDParam](c, validator.ValidatedParamKey)
 	if !ok {
-		c.Error(errs.BadRequest(errs.ErrInvalidCategory))
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
 		return
 	}
 
@@ -110,13 +110,13 @@ func (s *CategoryService) UpdateCategoryByIDHandler(c *gin.Context) {
 
 	params, ok := validator.GetValidatedData[validator.UpdateCategoryByIDParam](c, validator.ValidatedParamKey)
 	if !ok {
-		c.Error(errs.BadRequest(errs.ErrInvalidCategory))
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
 		return
 	}
 
 	category, ok := validator.GetValidatedData[validator.UpdateCategoryPayload](c, validator.ValidatedBodyKey)
 	if !ok {
-		c.Error(errs.BadRequest(errs.ErrInvalidCategory))
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
 		return
 	}
 
@@ -140,7 +140,7 @@ func (s *CategoryService) DeleteCategoryByIDHandler(c *gin.Context) {
 
 	params, ok := validator.GetValidatedData[validator.DeleteCategoryByIDParam](c, validator.ValidatedParamKey)
 	if !ok {
-		c.Error(errs.BadRequest(errs.ErrInvalidCategory))
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
 		return
 	}
 
@@ -164,7 +164,7 @@ func (s *CategoryService) GetLinksForCategoryHandler(c *gin.Context) {
 
 	params, ok := validator.GetValidatedData[validator.GetCategoryByIDParam](c, validator.ValidatedParamKey)
 	if !ok {
-		c.Error(errs.BadRequest(errs.ErrInvalidCategory))
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
 		return
 	}
 

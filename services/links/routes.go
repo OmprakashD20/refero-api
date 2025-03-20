@@ -25,9 +25,9 @@ func (s *LinkService) SetupLinkRoutes(api *gin.RouterGroup) {
 
 	api.GET("/r/:shortUrl", validator.ValidateParams[validator.RedirectLinkParams](), s.RedirectURLHandler)
 
-	api.PUT("/:id", validator.ValidateParams[validator.UpdateLinkByIDParam](), validator.ValidateBody[validator.UpdateLinkPayload]())
+	api.PUT("/:id", validator.ValidateParams[validator.UpdateLinkByIDParam](), validator.ValidateBody[validator.UpdateLinkPayload](), s.UpdateLinkByIDHandler)
 
-	api.DELETE("/:id", validator.ValidateParams[validator.DeleteLinkByIDParam]())
+	api.DELETE("/:id", validator.ValidateParams[validator.DeleteLinkByIDParam](), s.DeleteLinkByIDHandler)
 }
 
 func (s *LinkService) CreateLinkHandler(c *gin.Context) {
@@ -35,7 +35,7 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 
 	link, ok := validator.GetValidatedData[validator.CreateLinkPayload](c, validator.ValidatedBodyKey)
 	if !ok {
-		c.Error(errs.BadRequest(errs.ErrInvalidLink))
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
 		return
 	}
 
@@ -54,7 +54,7 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 			return
 		}
 
-		existingCategorySet := make(map[string]struct{})
+		existingCategorySet := make(map[string]struct{}, len(existingCategories))
 		for _, categoryID := range existingCategories {
 			existingCategorySet[categoryID] = struct{}{}
 		}
@@ -120,7 +120,7 @@ func (s *LinkService) RedirectURLHandler(c *gin.Context) {
 
 	params, ok := validator.GetValidatedData[validator.RedirectLinkParams](c, validator.ValidatedParamKey)
 	if !ok {
-		c.Error(errs.BadRequest(errs.ErrInvalidLink))
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
 		return
 	}
 
@@ -133,3 +133,6 @@ func (s *LinkService) RedirectURLHandler(c *gin.Context) {
 
 	c.Redirect(http.StatusMovedPermanently, data.Url)
 }
+
+func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {}
+func (s *LinkService) DeleteLinkByIDHandler(c *gin.Context) {}
