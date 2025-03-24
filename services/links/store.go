@@ -22,7 +22,7 @@ func NewStore(conn *pgxpool.Pool) *Store {
 }
 
 func (s *Store) CheckIfLinkExistsByURL(ctx context.Context, url string, txn *repository.Queries) (*string, error) {
-	if txn != nil {
+	if txn == nil {
 		txn = s.db
 	}
 	link, err := txn.CheckIfLinkExistsByURL(ctx, url)
@@ -35,7 +35,7 @@ func (s *Store) CheckIfLinkExistsByURL(ctx context.Context, url string, txn *rep
 }
 
 func (s *Store) CreateLink(ctx context.Context, link validator.CreateLinkPayload, shortUrl string, txn *repository.Queries) (*string, error) {
-	if txn != nil {
+	if txn == nil {
 		txn = s.db
 	}
 	args := repository.CreateLinkParams{
@@ -54,7 +54,7 @@ func (s *Store) CreateLink(ctx context.Context, link validator.CreateLinkPayload
 }
 
 func (s *Store) GetCategoriesForLink(ctx context.Context, id string, txn *repository.Queries) ([]string, error) {
-	if txn != nil {
+	if txn == nil {
 		txn = s.db
 	}
 	categories, err := txn.GetCategoriesForLink(ctx, utils.ToPgUUID(id))
@@ -71,7 +71,7 @@ func (s *Store) GetCategoriesForLink(ctx context.Context, id string, txn *reposi
 }
 
 func (s *Store) AddLinkToCategory(ctx context.Context, mappings []types.LinkCategoryDTO, txn *repository.Queries) error {
-	if txn != nil {
+	if txn == nil {
 		txn = s.db
 	}
 	var args []repository.AddLinkToCategoryParams
@@ -88,7 +88,7 @@ func (s *Store) AddLinkToCategory(ctx context.Context, mappings []types.LinkCate
 }
 
 func (s *Store) GetLinkByShortURL(ctx context.Context, shortUrl string, txn *repository.Queries) (*types.LinkDTO, error) {
-	if txn != nil {
+	if txn == nil {
 		txn = s.db
 	}
 	link, err := txn.GetLinkByShortURL(ctx, shortUrl)
@@ -109,7 +109,7 @@ func (s *Store) GetLinkByShortURL(ctx context.Context, shortUrl string, txn *rep
 }
 
 func (s *Store) UpdateLinkByID(ctx context.Context, id string, link validator.UpdateLinkPayload, txn *repository.Queries) error {
-	if txn != nil {
+	if txn == nil {
 		txn = s.db
 	}
 	args := repository.UpdateLinkParams{
@@ -128,7 +128,7 @@ func (s *Store) UpdateLinkByID(ctx context.Context, id string, link validator.Up
 }
 
 func (s *Store) RemoveLinkToCategory(ctx context.Context, mappings []types.LinkCategoryDTO, txn *repository.Queries) error {
-	if txn != nil {
+	if txn == nil {
 		txn = s.db
 	}
 	var args []repository.RemoveLinkFromCategoryParams
@@ -160,7 +160,7 @@ func (s *Store) RemoveLinkToCategory(ctx context.Context, mappings []types.LinkC
 }
 
 func (s *Store) DeleteLinkByID(ctx context.Context, id string, txn *repository.Queries) error {
-	if txn != nil {
+	if txn == nil {
 		txn = s.db
 	}
 	rows, err := txn.DeleteLink(ctx, utils.ToPgUUID(id))

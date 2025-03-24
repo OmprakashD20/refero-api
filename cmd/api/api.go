@@ -61,7 +61,7 @@ func (s *APIServer) Run() error {
 				"message": "you hit the v1 API route of Refero",
 			})
 		})
-
+		// Transaction Store
 		txnStore := database.NewTransactionStore(s.conn)
 
 		// Category Routes
