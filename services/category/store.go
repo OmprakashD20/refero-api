@@ -48,7 +48,7 @@ func (s *Store) CreateCategory(ctx context.Context, category validator.CreateCat
 		ParentID:    utils.ToPgUUID(category.ParentId),
 	}
 
-	if categoryId, err := s.db.CreateCategory(ctx, args); !categoryId.Valid {
+	if categoryID, err := s.db.CreateCategory(ctx, args); !categoryID.Valid {
 		return err
 	}
 
@@ -77,9 +77,9 @@ func (s *Store) GetAllCategories(ctx context.Context) ([]types.CategoryDTO, erro
 }
 
 func (s *Store) GetCategoryByID(ctx context.Context, id string) (*types.CategoryDTO, error) {
-	categoryId := utils.ToPgUUID(id)
+	categoryID := utils.ToPgUUID(id)
 
-	data, err := s.db.GetCategoryByID(ctx, categoryId)
+	data, err := s.db.GetCategoryByID(ctx, categoryID)
 	if err != nil {
 		return errs.IsErrNoRows[*types.CategoryDTO](err, nil)
 	}

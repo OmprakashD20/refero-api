@@ -45,12 +45,12 @@ func (s *Store) CreateLink(ctx context.Context, link validator.CreateLinkPayload
 		ShortUrl:    shortUrl,
 	}
 
-	linkId, err := txn.CreateLink(ctx, args)
-	if !linkId.Valid {
+	linkID, err := txn.CreateLink(ctx, args)
+	if !linkID.Valid {
 		return nil, err
 	}
 
-	return utils.PgUUIDToStringPtr(linkId), nil
+	return utils.PgUUIDToStringPtr(linkID), nil
 }
 
 func (s *Store) GetCategoriesForLink(ctx context.Context, id string, txn *repository.Queries) ([]string, error) {
@@ -63,11 +63,11 @@ func (s *Store) GetCategoriesForLink(ctx context.Context, id string, txn *reposi
 		return errs.IsErrNoRows[[]string](err, nil)
 	}
 
-	categoryIds := make([]string, len(categories))
+	categoryIDs := make([]string, len(categories))
 	for i, category := range categories {
-		categoryIds[i] = category.ID.String()
+		categoryIDs[i] = category.ID.String()
 	}
-	return categoryIds, nil
+	return categoryIDs, nil
 }
 
 func (s *Store) AddLinkToCategory(ctx context.Context, mappings []types.LinkCategoryDTO, txn *repository.Queries) error {
