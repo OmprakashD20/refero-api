@@ -24,6 +24,8 @@ type LinkStore interface {
 	RemoveLinkFromCategory(ctx context.Context, mappings []LinkCategoryDTO, txn *repository.Queries) error
 	CheckIfLinkExistsByURL(ctx context.Context, url string, txn *repository.Queries) (*string, error)
 	CreateLink(ctx context.Context, link validator.CreateLinkPayload, shortUrl string, txn *repository.Queries) (*string, error)
+	GetAllLinks(ctx context.Context) ([]LinkDTO, error)
+	GetLinkByID(ctx context.Context, id string) (*LinkDTO, error)
 	GetLinkByShortURL(ctx context.Context, shortUrl string, txn *repository.Queries) (*LinkDTO, error)
 	GetCategoriesForLink(ctx context.Context, id string, txn *repository.Queries) ([]string, error)
 	UpdateLinkByID(ctx context.Context, id string, link validator.UpdateLinkPayload, txn *repository.Queries) error

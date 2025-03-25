@@ -53,6 +53,47 @@ func (s *Store) CreateLink(ctx context.Context, link validator.CreateLinkPayload
 	return utils.PgUUIDToStringPtr(linkID), nil
 }
 
+func (s *Store) GetAllLinks(ctx context.Context) ([]types.LinkDTO, error) {
+	data, err := s.db.GetAllLinks(ctx)
+	if err != nil {
+		return errs.IsErrNoRows[[]types.LinkDTO](err, nil)
+	}
+
+	links := make([]types.LinkDTO, len(data))
+	for i, link := range data {
+		links[i] = types.LinkDTO{
+			ID:          link.ID.String(),
+			Title:       link.Title,
+			Description: link.Description,
+			Url:         link.Url,
+			ShortUrl:    link.ShortUrl,
+			CreatedAt:   &link.CreatedAt.Time,
+			UpdatedAt:   &link.UpdatedAt.Time,
+		}
+	}
+
+	return links, nil
+}
+
+func (s *Store) GetLinkByID(ctx context.Context, id string) (*types.LinkDTO, error) {
+	linkID := utils.ToPgUUID(id)
+	
+	data, err := s.db.GetLinkByID(ctx, linkID)
+	if err != nil {
+		return errs.IsErrNoRows[*types.LinkDTO](err, nil)
+	}
+
+	link := &types.LinkDTO{
+		ID:          data.ID.String(),
+		Title:       data.Title,
+		Description: data.Description,
+		Url:         data.Url,
+		ShortUrl:    data.ShortUrl,
+	}
+
+	return link, nil
+}
+
 func (s *Store) GetCategoriesForLink(ctx context.Context, id string, txn *repository.Queries) ([]string, error) {
 	if txn == nil {
 		txn = s.db

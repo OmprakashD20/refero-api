@@ -26,6 +26,8 @@ func NewService(store types.LinkStore, txn types.TransactionStore) *LinkService 
 func (s *LinkService) SetupLinkRoutes(api *gin.RouterGroup) {
 	api.POST("/", validator.ValidateBody[validator.CreateLinkPayload](), s.CreateLinkHandler)
 
+	api.GET("/", s.GetLinksHandler)
+	api.GET("/:id", validator.ValidateParams[validator.GetLinkByIDParam](), s.GetLinkByIDHandler)
 	api.GET("/r/:shortUrl", validator.ValidateParams[validator.RedirectLinkParams](), s.RedirectURLHandler)
 
 	api.PUT("/:id", validator.ValidateParams[validator.UpdateLinkByIDParam](), validator.ValidateBody[validator.UpdateLinkPayload](), s.UpdateLinkByIDHandler)
@@ -149,6 +151,50 @@ func (s *LinkService) RedirectURLHandler(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusMovedPermanently, data.Url)
+}
+
+func (s *LinkService) GetLinksHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Get all links from the database
+	links, err := s.store.GetAllLinks(ctx)
+	if err != nil {
+		c.Error(errs.InternalServerError(errs.WithCause(err)))
+		return
+	}
+
+	// No links found in the database
+	if links == nil {
+		c.JSON(http.StatusOK, []types.LinkDTO{})
+		return
+	}
+
+	c.JSON(http.StatusOK, links)
+}
+
+func (s *LinkService) GetLinkByIDHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	params, ok := validator.GetValidatedData[validator.GetLinkByIDParam](c, validator.ValidatedParamKey)
+	if !ok {
+		c.Error(errs.BadRequest(errs.ErrInvalidPayload))
+		return
+	}
+
+	// Get link by the Params ID from database
+	link, err := s.store.GetLinkByID(ctx, params.ID)
+	if err != nil {
+		c.Error(errs.InternalServerError(errs.WithCause(err)))
+		return
+	}
+
+	// No link found with the Params ID
+	if link == nil {
+		c.Error(errs.NotFound(errs.ErrLinkNotFound))
+		return
+	}
+
+	c.JSON(http.StatusOK, link)
 }
 
 func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {
