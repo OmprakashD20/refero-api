@@ -218,7 +218,7 @@ func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {
 			}
 		}
 		if len(categoriesToRemove) > 0 {
-			if err := s.store.RemoveLinkToCategory(ctx, categoriesToRemove, q); err != nil {
+			if err := s.store.RemoveLinkFromCategory(ctx, categoriesToRemove, q); err != nil {
 				return errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err))
 			}
 		}

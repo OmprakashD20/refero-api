@@ -127,7 +127,7 @@ func (s *Store) UpdateLinkByID(ctx context.Context, id string, link validator.Up
 	return err
 }
 
-func (s *Store) RemoveLinkToCategory(ctx context.Context, mappings []types.LinkCategoryDTO, txn *repository.Queries) error {
+func (s *Store) RemoveLinkFromCategoryry(ctx context.Context, mappings []types.LinkCategoryDTO, txn *repository.Queries) error {
 	if txn == nil {
 		txn = s.db
 	}
