@@ -90,7 +90,7 @@ func (s *CategoryService) GetCategoryByIDHandler(c *gin.Context) {
 	}
 
 	// Get category by the Params ID from database
-	category, err := s.store.GetCategoryByID(ctx, params.Id)
+	category, err := s.store.GetCategoryByID(ctx, params.ID)
 	if err != nil {
 		c.Error(errs.InternalServerError(errs.WithCause(err)))
 		return
@@ -121,7 +121,7 @@ func (s *CategoryService) UpdateCategoryByIDHandler(c *gin.Context) {
 	}
 
 	// Update the category
-	if err := s.store.UpdateCategoryByID(ctx, params.Id, category); err != nil {
+	if err := s.store.UpdateCategoryByID(ctx, params.ID, category); err != nil {
 		// If category doesn't exists
 		if errors.Is(err, errs.ErrCategoryNotFound) {
 			c.Error(errs.NotFound(errs.ErrCategoryNotFound))
@@ -145,7 +145,7 @@ func (s *CategoryService) DeleteCategoryByIDHandler(c *gin.Context) {
 	}
 
 	// Delete the category
-	if err := s.store.DeleteCategoryByID(ctx, params.Id); err != nil {
+	if err := s.store.DeleteCategoryByID(ctx, params.ID); err != nil {
 		// If category doesn't exists
 		if errors.Is(err, errs.ErrCategoryNotFound) {
 			c.Error(errs.NotFound(errs.ErrCategoryNotFound))
@@ -169,7 +169,7 @@ func (s *CategoryService) GetLinksForCategoryHandler(c *gin.Context) {
 	}
 
 	// Check if category exists
-	exists, err := s.store.CheckIfCategoryExistsByID(ctx, params.Id)
+	exists, err := s.store.CheckIfCategoryExistsByID(ctx, params.ID)
 	if err != nil {
 		c.Error(errs.InternalServerError(errs.WithCause(err)))
 		return
@@ -179,7 +179,7 @@ func (s *CategoryService) GetLinksForCategoryHandler(c *gin.Context) {
 		return
 	}
 
-	links, err := s.store.GetLinksForCategory(ctx, params.Id)
+	links, err := s.store.GetLinksForCategory(ctx, params.ID)
 	if err != nil {
 		c.Error(errs.InternalServerError(errs.WithCause(err)))
 		return

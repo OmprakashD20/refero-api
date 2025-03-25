@@ -43,16 +43,16 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 	}
 
 	// Check if link exists
-	linkId, err := s.store.CheckIfLinkExistsByURL(ctx, link.URL, nil)
+	linkID, err := s.store.CheckIfLinkExistsByURL(ctx, link.URL, nil)
 	if err != nil {
 		c.Error(errs.InternalServerError(errs.WithCause(err)))
 		return
 	}
 
 	// If exists, associate the existing link with new categories
-	if linkId != nil {
+	if linkID != nil {
 		err := s.txn.Exec(ctx, func(q *repository.Queries) error {
-			existingCategories, err := s.store.GetCategoriesForLink(ctx, *linkId, q)
+			existingCategories, err := s.store.GetCategoriesForLink(ctx, *linkID, q)
 			if err != nil {
 				return errs.InternalServerError(errs.WithCause(err))
 			}
@@ -66,7 +66,7 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 			for _, categoryID := range link.CategoryIDs {
 				if _, exists := existingCategorySet[categoryID]; !exists {
 					mappings = append(mappings, types.LinkCategoryDTO{
-						LinkID:     *linkId,
+						LinkID:     *linkID,
 						CategoryID: categoryID,
 					})
 				}
@@ -101,7 +101,7 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 	// Insert the link
 	err = s.txn.Exec(ctx, func(q *repository.Queries) error {
 		var err error
-		linkId, err = s.store.CreateLink(ctx, link, shortUrl, q)
+		linkID, err = s.store.CreateLink(ctx, link, shortUrl, q)
 		if err != nil {
 			return errs.InternalServerError(errs.WithError(errs.ErrFailedToCreateLink), errs.WithCause(err))
 		}
@@ -110,7 +110,7 @@ func (s *LinkService) CreateLinkHandler(c *gin.Context) {
 		var mappings []types.LinkCategoryDTO
 		for _, categoryID := range link.CategoryIDs {
 			mappings = append(mappings, types.LinkCategoryDTO{
-				LinkID:     *linkId,
+				LinkID:     *linkID,
 				CategoryID: categoryID,
 			})
 		}
@@ -168,7 +168,7 @@ func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {
 
 	err := s.txn.Exec(ctx, func(q *repository.Queries) error {
 		// Update the link
-		if err := s.store.UpdateLinkByID(ctx, params.Id, link, q); err != nil {
+		if err := s.store.UpdateLinkByID(ctx, params.ID, link, q); err != nil {
 			// If link doesn't exists
 			if errors.Is(err, errs.ErrLinkNotFound) {
 				return errs.NotFound(errs.ErrLinkNotFound)
@@ -177,7 +177,7 @@ func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {
 		}
 
 		// Get the existing categories associated with the link
-		existingCategories, err := s.store.GetCategoriesForLink(ctx, params.Id, q)
+		existingCategories, err := s.store.GetCategoriesForLink(ctx, params.ID, q)
 		if err != nil {
 			return errs.InternalServerError(errs.WithError(errs.ErrFailedToUpdateLink), errs.WithCause(err))
 		}
@@ -196,7 +196,7 @@ func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {
 		for _, categoryID := range existingCategories {
 			if _, exists := newCategorySet[categoryID]; !exists {
 				categoriesToRemove = append(categoriesToRemove, types.LinkCategoryDTO{
-					LinkID:     params.Id,
+					LinkID:     params.ID,
 					CategoryID: categoryID,
 				})
 			}
@@ -206,7 +206,7 @@ func (s *LinkService) UpdateLinkByIDHandler(c *gin.Context) {
 		for _, categoryID := range link.CategoryIDs {
 			if _, exists := existingCategorySet[categoryID]; !exists {
 				categoriesToAdd = append(categoriesToAdd, types.LinkCategoryDTO{
-					LinkID:     params.Id,
+					LinkID:     params.ID,
 					CategoryID: categoryID,
 				})
 			}
@@ -244,7 +244,7 @@ func (s *LinkService) DeleteLinkByIDHandler(c *gin.Context) {
 	}
 
 	// Delete the link
-	if err := s.store.DeleteLinkByID(ctx, params.Id, nil); err != nil {
+	if err := s.store.DeleteLinkByID(ctx, params.ID, nil); err != nil {
 		// If link doesn't exists
 		if errors.Is(err, errs.ErrLinkNotFound) {
 			c.Error(errs.NotFound(errs.ErrLinkNotFound))

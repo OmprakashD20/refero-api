@@ -12,7 +12,7 @@ type (
 )
 
 type CategoryParams struct {
-	Id string `uri:"id" binding:"required,uuid"`
+	ID string `uri:"id" binding:"required,uuid"`
 }
 
 type (

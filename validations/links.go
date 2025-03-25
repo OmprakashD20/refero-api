@@ -13,7 +13,7 @@ type (
 )
 
 type LinkParams struct {
-	Id string `uri:"id" binding:"required,uuid"`
+	ID string `uri:"id" binding:"required,uuid"`
 }
 
 type (
