@@ -22,9 +22,7 @@ type DBConfig struct {
 	SSLMode    string
 }
 
-var Envs = initConfig()
-
-func initConfig() EnvConfig {
+func initEnvConfig() EnvConfig {
 	if err := godotenv.Load(".env"); err != nil {
 		log.Fatalf("Error loading .env file")
 	}
@@ -51,3 +49,5 @@ func getEnv(key string) *string {
 	log.Fatalf("Environment variable %s is not set", key)
 	return nil
 }
+
+var Envs = initEnvConfig()

@@ -27,6 +27,9 @@ func (s *APIServer) Run() error {
 	gin.SetMode(gin.ReleaseMode)
 
 	app := gin.New()
+	app.RedirectTrailingSlash = false
+
+	app.Use(middlewares.CORS())
 
 	app.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		return fmt.Sprintf("[GIN] [%s] | [%s] %d | %s | %s\n",
@@ -73,6 +76,10 @@ func (s *APIServer) Run() error {
 		linkStore := links.NewStore(s.conn)
 		LinkService := links.NewService(linkStore, txnStore)
 		LinkService.SetupLinkRoutes(api.Group("/link"))
+	}
+
+	for _, r := range app.Routes() {
+		fmt.Printf("[%s]: %s\n", r.Method, r.Path)
 	}
 
 	log.Printf("Server is running on PORT %s", s.port)
